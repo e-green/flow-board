@@ -1,0 +1,45 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 Int      @id @default(autoincrement()) // Auto-incrementing integer ID
+  email              String   @unique
+  name               String
+  password           String
+  verification_token String?
+  verified           Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  token_expiration   DateTime?
+  reset_token        String?  // Field to store the reset token
+  reset_token_expiry DateTime? // Field to store the token expiration time
+  tasks              Task[]   // Relation to tasks
+}
+
+model Task {
+  id          Int       @id @default(autoincrement())  // Changed to Int with autoincrement
+  title       String
+  description String?
+  createdAt   DateTime  @default(now())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  subTasks    SubTask[]
+}
+
+model SubTask {
+  id        Int       @id @default(autoincrement())
+  title     String
+  taskId    Int     // Change taskId from String to Int
+  task      Task    @relation(fields: [taskId], references: [id]) // Relation to Task
+}
