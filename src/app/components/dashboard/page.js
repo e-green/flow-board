@@ -45,6 +45,7 @@ export default function Dashboard() {
     }
   };
 
+  // Navigate to task details page
   const handleTaskClick = (taskId) => {
     router.push(`/components/task/${taskId}`); // Navigate to task details page
   };
