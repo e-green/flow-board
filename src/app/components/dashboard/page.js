@@ -13,6 +13,7 @@ import {
   Bars3Icon,
   UserCircleIcon,
   ChevronDownIcon,
+  
 } from "@heroicons/react/24/outline";
 
 export default function Dashboard() {
@@ -45,7 +46,6 @@ export default function Dashboard() {
     }
   };
 
-  // Navigate to task details page
   const handleTaskClick = (taskId) => {
     router.push(`/components/task/${taskId}`); // Navigate to task details page
   };
@@ -206,17 +206,23 @@ export default function Dashboard() {
               {tasks.map((task) => (
                 <li
                   key={task.id}
-                  className="flex items-center px-4 py-2 cursor-pointer text-gray-400 hover:bg-gray-200"
-                  onClick={() => handleTaskClick(task.id)}
+                  className="flex items-center justify-between px-4 py-2 cursor-pointer text-gray-400 hover:bg-gray-200"
                 >
-                  {task.logo && (
-                    <img
-                      src={task.logo}
-                      alt="Logo"
-                      className="w-8 h-8 rounded-full mr-3"
-                    />
-                  )}
-                  <span>{task.title}</span>
+                  <div
+                    className="flex items-center"
+                    onClick={() => handleTaskClick(task.id)}
+                  >
+                    {task.logo && (
+                      <img
+                        src={task.logo}
+                        alt="Logo"
+                        className="w-8 h-8 rounded-full mr-3"
+                      />
+                    )}
+                    <span>{task.title}</span>
+                  </div>
+
+                  
                 </li>
               ))}
             </ul>
