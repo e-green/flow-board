@@ -1,6 +1,8 @@
 "use client";
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/solid';
 import Dashboard from "../../dashboard/page.js";
 
@@ -31,7 +33,7 @@ export default function TaskDetails({ params }) {
         coverImage: data.coverImage || ''
       });
     } catch (error) {
-      console.error('Error fetching task details:', error);
+      toast.error('Error fetching task details', { position: 'top-right', autoClose: 2000 });
     }
   };
 
@@ -47,11 +49,11 @@ export default function TaskDetails({ params }) {
   };
 
   const handleLogoChange = (e) => {
-    setLogoFile(e.target.files[0]); // Save the selected logo file
+    setLogoFile(e.target.files[0]);
   };
 
   const handleCoverImageChange = (e) => {
-    setCoverImageFile(e.target.files[0]); // Save the selected cover image file
+    setCoverImageFile(e.target.files[0]);
   };
 
   const handleUpdateTask = async () => {
@@ -65,16 +67,17 @@ export default function TaskDetails({ params }) {
     try {
       const response = await axios.post(`/api/task/update-task`, formDataToSend, {
         headers: {
-          'Content-Type': 'multipart/form-data', // Ensure the request is sent as form-data
+          'Content-Type': 'multipart/form-data',
         },
       });
       const updatedTask = response.data;
       setTask(updatedTask);
       setIsEditing(false);
-      setLogoFile(null); // Clear the file input
-      setCoverImageFile(null); // Clear the file input
+      setLogoFile(null);
+      setCoverImageFile(null);
+      toast.success('Task updated successfully', { position: 'top-right', autoClose: 2000 });
     } catch (error) {
-      console.error('Error updating task:', error);
+      toast.error('Error updating task', { position: 'top-right', autoClose: 2000 });
     }
   };
 
@@ -87,8 +90,9 @@ export default function TaskDetails({ params }) {
       });
       fetchTaskDetails(taskId);
       setNewSubtaskTitle('');
+      toast.success('Subtask added successfully', { position: 'top-right', autoClose: 2000 });
     } catch (error) {
-      console.error('Error adding subtask:', error);
+      toast.error('Error adding subtask', { position: 'top-right', autoClose: 2000 });
     }
   };
 
@@ -98,12 +102,11 @@ export default function TaskDetails({ params }) {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
-      {/* Sidebar */}
+      <ToastContainer position="top-right" autoClose={2000} />
       <div className="w-64 bg-blue-950 text-white p-5">
         <Dashboard />
       </div>
 
-      {/* Task Details Section */}
       <div className="flex-grow max-w-5xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6 md:mt-0">
         {isEditing ? (
           <div className="space-y-4">
@@ -132,6 +135,7 @@ export default function TaskDetails({ params }) {
               <label className="block text-sm font-medium text-gray-700">Logo Upload</label>
               <input
                 type="file"
+                accept="image/*"
                 onChange={handleLogoChange}
                 className="mt-1 p-2 border text-gray-700 border-gray-300 rounded-md w-full"
               />
@@ -141,11 +145,11 @@ export default function TaskDetails({ params }) {
               <label className="block text-sm font-medium text-gray-700">Cover Image Upload</label>
               <input
                 type="file"
+                accept="image/*"
                 onChange={handleCoverImageChange}
                 className="mt-1 p-2 border text-gray-700 border-gray-300 rounded-md w-full"
               />
             </div>
-
 
             <button
               onClick={handleUpdateTask}
