@@ -1,14 +1,14 @@
-"use client"; // This marks the component as a Client Component
-import axios from 'axios'; // Import axios
+"use client";
+import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/solid'; // Updated import
-import Dashboard from "../../dashboard/page.js"; // Import the Dashboard component
+import { PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/solid';
+import Dashboard from "../../dashboard/page.js";
 
 export default function TaskDetails({ params }) {
   const [task, setTask] = useState(null);
-  const [isEditing, setIsEditing] = useState(false); // Track edit mode
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ title: '', description: '', logo: '', coverImage: '' });
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState(''); // For new subtask creation
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const { taskId } = params;
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function TaskDetails({ params }) {
   };
 
   const handleEditTask = () => {
-    setIsEditing(true); // Enable edit mode
+    setIsEditing(true);
   };
 
   const handleFormChange = (e) => {
@@ -51,22 +51,22 @@ export default function TaskDetails({ params }) {
         ...formData
       });
       const updatedTask = response.data;
-      setTask(updatedTask); // Update task with new data
-      setIsEditing(false); // Disable edit mode
+      setTask(updatedTask);
+      setIsEditing(false);
     } catch (error) {
       console.error('Error updating task:', error);
     }
   };
 
   const addSubtask = async (title = '') => {
-    if (!title.trim()) return; // Prevent adding if title is empty
+    if (!title.trim()) return;
     try {
       const response = await axios.post(`/api/task/create-subtask`, {
         title,
         taskId: taskId,
       });
       fetchTaskDetails(taskId);
-      setNewSubtaskTitle(''); // Clear main subtask title
+      setNewSubtaskTitle('');
     } catch (error) {
       console.error('Error adding subtask:', error);
     }
@@ -77,17 +77,16 @@ export default function TaskDetails({ params }) {
   }
 
   return (
-    <div className="flex">
-      {/* Dashboard Sidebar */}
-      <div className="w-1/4">
+    <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
+      {/* Sidebar */}
+      <div className="w-64 bg-blue-950 text-white p-5">
         <Dashboard />
       </div>
 
       {/* Task Details Section */}
-      <div className="w-3/4 max-w-5xl mx-auto p-6 bg-white shadow-md rounded-lg">
+      <div className="flex-grow max-w-5xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6 md:mt-0">
         {isEditing ? (
           <div className="space-y-4">
-            {/* Task Editing Form */}
             <div>
               <label className="block text-sm font-medium text-gray-700">Title</label>
               <input
@@ -140,7 +139,6 @@ export default function TaskDetails({ params }) {
           </div>
         ) : (
           <div>
-            {/* Cover Image */}
             {task.coverImage && (
               <div className="mb-6">
                 <img
@@ -151,7 +149,6 @@ export default function TaskDetails({ params }) {
               </div>
             )}
 
-            {/* Task Title and Logo */}
             <div className="flex items-center mb-4">
               {task.logo && (
                 <img
@@ -169,14 +166,10 @@ export default function TaskDetails({ params }) {
               </button>
             </div>
 
-            {/* Task Description */}
             <p className="text-gray-600 text-lg mb-6">{task.description}</p>
-            
 
-            {/* Display Subtasks */}
             <h2 className="text-2xl font-medium text-gray-700 mb-4">Subtasks:</h2>
 
-            {/* Main Subtask Input */}
             <div className="mt-6">
               <input
                 type="text"
@@ -189,16 +182,14 @@ export default function TaskDetails({ params }) {
                 Add Subtask
               </button>
             </div>
-            
-            <b className="list-disc pl-0 text-xl text-gray-700">
-              {task.subTasks?.map((subtask) => (
-                <h1 key={subtask.id} className="mt-2">
-                  {subtask.title}
-                </h1>
-              ))}
-            </b>
 
-            
+            <ul className="list-disc pl-0 text-xl text-gray-700">
+              {task.subTasks?.map((subtask) => (
+                <li key={subtask.id} className="mt-2">
+                  {subtask.title}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>
