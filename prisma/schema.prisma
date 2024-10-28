@@ -41,8 +41,15 @@ model Task {
 
 
 model SubTask {
-  id        Int       @id @default(autoincrement())
-  title     String
-  taskId    Int     // Change taskId from String to Int
-  task      Task    @relation(fields: [taskId], references: [id]) // Relation to Task
+  id         Int       @id @default(autoincrement())
+  title      String
+  taskId     Int       // Foreign key for main Task
+  parentId   Int?      // Optional parent ID for nested subtasks
+  task       Task      @relation(fields: [taskId], references: [id])
+  parent     SubTask?  @relation("SubtaskParent", fields: [parentId], references: [id])
+  children   SubTask[] @relation("SubtaskParent")
+
+  // Automatically set createdAt date for each subtask
+  createdAt  DateTime  @default(now())
 }
+

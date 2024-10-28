@@ -1,15 +1,14 @@
-// src/app/components/task/[taskId]/page.js
-
 "use client"; // This marks the component as a Client Component
 import axios from 'axios'; // Import axios
 import { useEffect, useState } from 'react';
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/solid'; // Updated import
+import { PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/solid'; // Updated import
 import Dashboard from "../../dashboard/page.js"; // Import the Dashboard component
 
 export default function TaskDetails({ params }) {
   const [task, setTask] = useState(null);
   const [isEditing, setIsEditing] = useState(false); // Track edit mode
   const [formData, setFormData] = useState({ title: '', description: '', logo: '', coverImage: '' });
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState(''); // For new subtask creation
   const { taskId } = params;
 
   useEffect(() => {
@@ -56,6 +55,20 @@ export default function TaskDetails({ params }) {
       setIsEditing(false); // Disable edit mode
     } catch (error) {
       console.error('Error updating task:', error);
+    }
+  };
+
+  const addSubtask = async (title = '') => {
+    if (!title.trim()) return; // Prevent adding if title is empty
+    try {
+      const response = await axios.post(`/api/task/create-subtask`, {
+        title,
+        taskId: taskId,
+      });
+      fetchTaskDetails(taskId);
+      setNewSubtaskTitle(''); // Clear main subtask title
+    } catch (error) {
+      console.error('Error adding subtask:', error);
     }
   };
 
@@ -158,20 +171,34 @@ export default function TaskDetails({ params }) {
 
             {/* Task Description */}
             <p className="text-gray-600 text-lg mb-6">{task.description}</p>
+            
 
-            {/* Display Subtasks if available */}
-            {task.subTasks && task.subTasks.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-medium text-gray-700 mb-4">Subtasks:</h2>
-                <ul className="list-disc list-inside pl-4">
-                  {task.subTasks.map((subTask) => (
-                    <li key={subTask.id} className="text-gray-600 text-md mb-2">
-                      {subTask.title}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {/* Display Subtasks */}
+            <h2 className="text-2xl font-medium text-gray-700 mb-4">Subtasks:</h2>
+
+            {/* Main Subtask Input */}
+            <div className="mt-6">
+              <input
+                type="text"
+                value={newSubtaskTitle}
+                onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                placeholder="Add new subtask"
+                className="p-2 border border-gray-300 text-black rounded-md mr-2"
+              />
+              <button onClick={() => addSubtask(newSubtaskTitle)} className="bg-green-500 text-white p-2 rounded-md">
+                Add Subtask
+              </button>
+            </div>
+            
+            <b className="list-disc pl-0 text-xl text-gray-700">
+              {task.subTasks?.map((subtask) => (
+                <h1 key={subtask.id} className="mt-2">
+                  {subtask.title}
+                </h1>
+              ))}
+            </b>
+
+            
           </div>
         )}
       </div>
