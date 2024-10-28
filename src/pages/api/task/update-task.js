@@ -36,15 +36,19 @@ const handler = async (req, res) => {
 
         // Check and upload the logo file if it exists
         if (logoFile && logoFile.filepath) {
-          console.log('Uploading logo file from path:', logoFile.filepath);
-          const logoUpload = await cloudinary.uploader.upload(logoFile.filepath);
+          //console.log('Uploading logo file from path:', logoFile.filepath);
+          const logoUpload = await cloudinary.uploader.upload(logoFile.filepath,{
+              folder: 'tasks',
+            });
           logoUrl = logoUpload.secure_url;
         }
 
         // Check and upload the cover image file if it exists
         if (coverImageFile && coverImageFile.filepath) {
-          console.log('Uploading cover image file from path:', coverImageFile.filepath);
-          const coverUpload = await cloudinary.uploader.upload(coverImageFile.filepath);
+          //console.log('Uploading cover image file from path:', coverImageFile.filepath);
+          const coverUpload = await cloudinary.uploader.upload(coverImageFile.filepath, {
+            folder: 'tasks',
+          });
           coverImageUrl = coverUpload.secure_url;
         }
 
