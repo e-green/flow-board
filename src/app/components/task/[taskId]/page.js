@@ -9,6 +9,8 @@ export default function TaskDetails({ params }) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ title: '', description: '', logo: '', coverImage: '' });
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+  const [logoFile, setLogoFile] = useState(null);
+  const [coverImageFile, setCoverImageFile] = useState(null);
   const { taskId } = params;
 
   useEffect(() => {
@@ -44,15 +46,33 @@ export default function TaskDetails({ params }) {
     });
   };
 
+  const handleLogoChange = (e) => {
+    setLogoFile(e.target.files[0]); // Save the selected logo file
+  };
+
+  const handleCoverImageChange = (e) => {
+    setCoverImageFile(e.target.files[0]); // Save the selected cover image file
+  };
+
   const handleUpdateTask = async () => {
+    const formDataToSend = new FormData();
+    formDataToSend.append('id', taskId);
+    formDataToSend.append('title', formData.title);
+    formDataToSend.append('description', formData.description);
+    if (logoFile) formDataToSend.append('logo', logoFile);
+    if (coverImageFile) formDataToSend.append('coverImage', coverImageFile);
+
     try {
-      const response = await axios.post(`/api/task/update-task`, {
-        id: taskId,
-        ...formData
+      const response = await axios.post(`/api/task/update-task`, formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data', // Ensure the request is sent as form-data
+        },
       });
       const updatedTask = response.data;
       setTask(updatedTask);
       setIsEditing(false);
+      setLogoFile(null); // Clear the file input
+      setCoverImageFile(null); // Clear the file input
     } catch (error) {
       console.error('Error updating task:', error);
     }
@@ -109,26 +129,23 @@ export default function TaskDetails({ params }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Logo URL</label>
+              <label className="block text-sm font-medium text-gray-700">Logo Upload</label>
               <input
-                type="text"
-                name="logo"
-                value={formData.logo}
-                onChange={handleFormChange}
+                type="file"
+                onChange={handleLogoChange}
                 className="mt-1 p-2 border text-gray-700 border-gray-300 rounded-md w-full"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Cover Image URL</label>
+              <label className="block text-sm font-medium text-gray-700">Cover Image Upload</label>
               <input
-                type="text"
-                name="coverImage"
-                value={formData.coverImage}
-                onChange={handleFormChange}
+                type="file"
+                onChange={handleCoverImageChange}
                 className="mt-1 p-2 border text-gray-700 border-gray-300 rounded-md w-full"
               />
             </div>
+
 
             <button
               onClick={handleUpdateTask}
