@@ -10,7 +10,6 @@ export default function TaskDetails({ params }) {
   const [task, setTask] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ title: '', description: '', logo: '', coverImage: '' });
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [logoFile, setLogoFile] = useState(null);
   const [coverImageFile, setCoverImageFile] = useState(null);
   const { taskId } = params;
@@ -81,19 +80,9 @@ export default function TaskDetails({ params }) {
     }
   };
 
-  const addSubtask = async (title = '') => {
-    if (!title.trim()) return;
-    try {
-      const response = await axios.post(`/api/task/create-subtask`, {
-        title,
-        taskId: taskId,
-      });
-      fetchTaskDetails(taskId);
-      setNewSubtaskTitle('');
-      toast.success('Subtask added successfully', { position: 'top-right', autoClose: 2000 });
-    } catch (error) {
-      toast.error('Error adding subtask', { position: 'top-right', autoClose: 2000 });
-    }
+  const addSubtask = async () => {
+    // Implement the functionality for adding a subtask here
+    toast.info('Add subtask functionality to be implemented', { position: 'top-right', autoClose: 2000 });
   };
 
   if (!task) {
@@ -189,28 +178,15 @@ export default function TaskDetails({ params }) {
 
             <p className="text-gray-600 text-lg mb-6">{task.description}</p>
 
-            <h2 className="text-2xl font-medium text-gray-700 mb-4">Subtasks:</h2>
-
             <div className="mt-6">
-              <input
-                type="text"
-                value={newSubtaskTitle}
-                onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                placeholder="Add new subtask"
-                className="p-2 border border-gray-300 text-black rounded-md mr-2"
-              />
-              <button onClick={() => addSubtask(newSubtaskTitle)} className="bg-green-500 text-white p-2 rounded-md">
+              <button 
+                onClick={addSubtask}
+                className="flex items-center bg-green-500 text-white p-2 rounded-md"
+              >
+                <PlusIcon className="h-5 w-5 mr-2" />
                 Add Subtask
               </button>
             </div>
-
-            <ul className="list-disc pl-0 text-xl text-gray-700">
-              {task.subTasks?.map((subtask) => (
-                <li key={subtask.id} className="mt-2">
-                  {subtask.title}
-                </li>
-              ))}
-            </ul>
           </div>
         )}
       </div>
