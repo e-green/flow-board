@@ -4,12 +4,16 @@ const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
-    const { title, taskId, parentId } = req.body;
+    const { title, taskId, parentId, description, status, images, documents } = req.body;
 
     try {
       const subtask = await prisma.subTask.create({
         data: {
           title,
+          description: description || null,
+          status: status || "Not Started", // Default to "Not Started"
+          images: images || [], // Empty array if no images
+          documents: documents || [], // Empty array if no documents
           taskId: parseInt(taskId),
           parentId: parentId ? parseInt(parentId) : null,
         },
