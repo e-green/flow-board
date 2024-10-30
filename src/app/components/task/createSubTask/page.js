@@ -108,6 +108,7 @@ export default function CreateSubTask() {
               className=" p-2 border text-gray-800 border-gray-300 rounded-md w-full focus:outline-none focus:border-blue-400"
             >
               <option value="pending">Pending</option>
+              <option value="not-started">Pending</option>
               <option value="in-progress">In Progress</option>
               <option value="completed">Completed</option>
             </select>
