@@ -4,14 +4,13 @@ import { useState, useEffect } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useRouter } from 'next/navigation';
+import Dashboard from "../../dashboard/page.js";
 
 export default function CreateSubTask() {
   const [formData, setFormData] = useState({ title: '', status: 'pending', images: [], documents: [] });
   const [taskId, setTaskId] = useState(null);
   const router = useRouter();
-  
 
-  // Extract taskId from the URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const taskIdFromQuery = params.get('taskId');
@@ -35,31 +34,29 @@ export default function CreateSubTask() {
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
-    const fileType = e.target.name; // Determine if it's for images or documents
-  
-    // Use Cloudinary for image and document uploads
+    const fileType = e.target.name;
+
     const uploadPromises = files.map(file => {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('upload_preset', 'FlowBoard'); // Replace with your Cloudinary upload preset
-  
-      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME; // Access the cloud name from environment variable
-  
+      formData.append('upload_preset', 'FlowBoard');
+
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+
       return axios.post(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, formData)
-        .then(response => response.data.secure_url); // Get the uploaded file's URL
+        .then(response => response.data.secure_url);
     });
-  
+
     Promise.all(uploadPromises).then(urls => {
       setFormData(prevState => ({
         ...prevState,
-        [fileType]: [...prevState[fileType], ...urls], // Add URLs to the respective field
+        [fileType]: [...prevState[fileType], ...urls],
       }));
     }).catch(error => {
       console.error('Error uploading files:', error);
       toast.error('Error uploading files', { position: 'top-right', autoClose: 2000 });
     });
   };
-  
 
   const handleCreateSubTask = async () => {
     if (!taskId) {
@@ -83,59 +80,65 @@ export default function CreateSubTask() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-      <ToastContainer position="top-right" autoClose={2000} />
-      <div className="bg-white p-6 rounded-md shadow-md w-full max-w-md">
-        <h2 className="text-xl font-semibold mb-4">Create Subtask</h2>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Title</label>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleFormChange}
-            className="mt-1 p-2 border text-gray-700 border-gray-300 rounded-md w-full"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Status</label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleFormChange}
-            className="mt-1 p-2 border text-gray-700 border-gray-300 rounded-md w-full"
+    <div className="min-h-screen flex flex-col lg:flex-row bg-gray-100">
+      <div className="bg-gray-100 lg:w-1/4 shadow-lg p-0">
+        <Dashboard />
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-center p-6">
+        <ToastContainer position="top-right" autoClose={2000} />
+        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md border border-gray-200">
+          <h2 className="text-2xl font-semibold mb-6 text-gray-800 text-center">Create Subtask</h2>
+          <div>
+            <label className="block text-sm font-medium text-gray-600">Title</label>
+            <input
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleFormChange}
+              className=" p-2 border text-gray-800 border-gray-300 rounded-md w-full focus:outline-none focus:border-blue-400"
+              placeholder="Enter subtask title"
+            />
+          </div>
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-600">Status</label>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleFormChange}
+              className=" p-2 border text-gray-800 border-gray-300 rounded-md w-full focus:outline-none focus:border-blue-400"
+            >
+              <option value="pending">Pending</option>
+              <option value="in-progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-600">Upload Images</label>
+            <input
+              type="file"
+              name="images"
+              multiple
+              onChange={handleFileChange}
+              className=" p-2 border text-gray-800 border-gray-300 rounded-md w-full focus:outline-none"
+            />
+          </div>
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-600">Upload Documents</label>
+            <input
+              type="file"
+              name="documents"
+              multiple
+              onChange={handleFileChange}
+              className=" p-2 border text-gray-800 border-gray-300 rounded-md w-full focus:outline-none"
+            />
+          </div>
+          <button
+            onClick={handleCreateSubTask}
+            className="mt-6 bg-blue-950 hover:bg-blue-700 transition duration-200 text-white font-semibold p-2 rounded-md w-full focus:outline-none focus:ring-4 focus:ring-blue-200"
           >
-            <option value="pending">Pending</option>
-            <option value="in-progress">In Progress</option>
-            <option value="completed">Completed</option>
-          </select>
+            Create Subtask
+          </button>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Upload Images</label>
-          <input
-            type="file"
-            name="images"
-            multiple
-            onChange={handleFileChange}
-            className="mt-1 p-2 border text-gray-700 border-gray-300 rounded-md w-full"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Upload Documents</label>
-          <input
-            type="file"
-            name="documents"
-            multiple
-            onChange={handleFileChange}
-            className="mt-1 p-2 border text-gray-700 border-gray-300 rounded-md w-full"
-          />
-        </div>
-        <button
-          onClick={handleCreateSubTask}
-          className="mt-4 bg-blue-500 text-white p-2 rounded-md"
-        >
-          Create Subtask
-        </button>
       </div>
     </div>
   );
