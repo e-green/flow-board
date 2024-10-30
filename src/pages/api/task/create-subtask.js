@@ -5,8 +5,8 @@ const prisma = new PrismaClient();
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
-      const { title, taskId } = req.body;
-      const numericTaskId = Number(taskId); // Convert taskId to a number
+      const { title, taskId, status, images, documents } = req.body;
+      const numericTaskId = Number(taskId);
 
       if (isNaN(numericTaskId)) {
         return res.status(400).json({ error: 'Invalid taskId: taskId should be a number.' });
@@ -26,6 +26,9 @@ export default async function handler(req, res) {
         data: {
           title,
           taskId: numericTaskId,
+          status, // Save the status
+          images, // Save the array of image URLs
+          documents // Save the array of document URLs
         },
       });
 

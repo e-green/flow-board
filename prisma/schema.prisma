@@ -45,6 +45,10 @@ model SubTask {
   title     String
   taskId    Int     // Change taskId from String to Int
   task      Task    @relation(fields: [taskId], references: [id]) // Relation to Task
+  status    String   @default("pending") // New field for status
+  images    String[] // New field for storing image URLs (array of strings)
+  documents String[] // New field for storing document URLs (array of strings)
 }
+
 
 
