@@ -1,54 +1,57 @@
 "use client";
 import axios from 'axios';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useRouter } from 'next/navigation'; // Correct usage for app directory
 
-export default function CreateSubTask({ taskId, parentId }) {
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    status: 'Not Started',
-    images: [],
-    documents: [],
-  });
+export default function CreateSubTask() {
+  const [formData, setFormData] = useState({ title: '' });
+  const [taskId, setTaskId] = useState(null);
+  const router = useRouter();
+
+  // Extract taskId from the URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const taskIdFromQuery = params.get('taskId'); // Get taskId from the query
+
+    if (taskIdFromQuery) {
+      const parsedTaskId = parseInt(taskIdFromQuery, 10);
+      if (!isNaN(parsedTaskId)) {
+        setTaskId(parsedTaskId); // Set taskId if it's a valid number
+      } else {
+        console.error('Invalid taskId:', taskIdFromQuery);
+      }
+    }
+  }, []); // No dependencies; run once on mount
 
   const handleFormChange = (e) => {
-    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value,
+      [e.target.name]: e.target.value,
     });
   };
 
-  const handleFileChange = (e, field) => {
-    const files = Array.from(e.target.files);
-    setFormData({
-      ...formData,
-      [field]: files.map(file => URL.createObjectURL(file)), // Store file URLs or names
-    });
-  };
-
-  const handleCreateSubtask = async () => {
+  const handleCreateSubTask = async () => {
+    if (!taskId) {
+      toast.error('Task ID is missing.', { position: 'top-right', autoClose: 2000 });
+      return;
+    }
     try {
-      const response = await axios.post(`/api/task/create-subtask`, {
-        ...formData,
-        taskId: taskId,
-        parentId: parentId,
-      });
-      toast.success('Subtask created successfully!', { position: 'top-right', autoClose: 2000 });
-      // Optionally redirect or clear the form here
+      await axios.post(`/api/task/create-subtask`, { title: formData.title, taskId });
+      toast.success('Subtask created successfully', { position: 'top-right', autoClose: 2000 });
+      router.back();
     } catch (error) {
       toast.error('Error creating subtask', { position: 'top-right', autoClose: 2000 });
+      console.error('Error creating subtask:', error);
     }
   };
-  
 
   return (
-    <div className="p-6 bg-white shadow-md rounded-lg">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
       <ToastContainer position="top-right" autoClose={2000} />
-      <h2 className="text-2xl font-medium mb-4">Create Subtask</h2>
-      <div className="space-y-4">
+      <div className="bg-white p-6 rounded-md shadow-md w-full max-w-md">
+        <h2 className="text-xl font-semibold mb-4">Create Subtask</h2>
         <div>
           <label className="block text-sm font-medium text-gray-700">Title</label>
           <input
@@ -56,54 +59,11 @@ export default function CreateSubTask({ taskId, parentId }) {
             name="title"
             value={formData.title}
             onChange={handleFormChange}
-            className="mt-1 p-2 border border-gray-300 rounded-md w-full"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Description</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleFormChange}
-            className="mt-1 p-2 border border-gray-300 rounded-md w-full"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Status</label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleFormChange}
-            className="mt-1 p-2 border border-gray-300 rounded-md w-full"
-          >
-            <option value="Not Started">Not Started</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Images Upload</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleFileChange(e, 'images')}
-            multiple
-            className="mt-1 p-2 border border-gray-300 rounded-md w-full"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Documents Upload</label>
-          <input
-            type="file"
-            accept=".pdf,.doc,.docx,.txt"
-            onChange={(e) => handleFileChange(e, 'documents')}
-            multiple
-            className="mt-1 p-2 border border-gray-300 rounded-md w-full"
+            className="mt-1 p-2 border text-gray-700 border-gray-300 rounded-md w-full"
           />
         </div>
         <button
-          onClick={handleCreateSubtask}
+          onClick={handleCreateSubTask}
           className="mt-4 bg-blue-500 text-white p-2 rounded-md"
         >
           Create Subtask

@@ -1,40 +1,41 @@
 import { PrismaClient } from "@prisma/client";
+
 const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
-  if (req.method === "POST") {
-    const { title, taskId, parentId, description, status, images, documents } =
-      req.body;
-
-    // Parse and validate taskId
-    const taskIdInt = parseInt(taskId);
-    if (isNaN(taskIdInt)) {
-      return res.status(400).json({ error: "Invalid taskId" });
-    }
-
-    console.log('Request body:', req.body);
-
+  if (req.method === 'POST') {
     try {
-      const subtask = await prisma.subTask.create({
+      const { title, taskId } = req.body;
+      const numericTaskId = Number(taskId); // Convert taskId to a number
+
+      if (isNaN(numericTaskId)) {
+        return res.status(400).json({ error: 'Invalid taskId: taskId should be a number.' });
+      }
+
+      // Check if the taskId exists
+      const taskExists = await prisma.task.findUnique({
+        where: { id: numericTaskId },
+      });
+
+      if (!taskExists) {
+        return res.status(404).json({ error: `Task with id ${numericTaskId} does not exist.` });
+      }
+
+      // Create the subtask
+      const newSubtask = await prisma.subTask.create({
         data: {
           title,
-          description: description || null,
-          status: status || "Not Started", // Default to "Not Started"
-          images: images || [], // Empty array if no images
-          documents: documents || [], // Empty array if no documents
-          taskId: taskIdInt, // Use the parsed taskId
-          parentId: parentId ? parseInt(parentId) : null,
+          taskId: numericTaskId,
         },
       });
-      res.status(200).json(subtask);
+
+      res.status(201).json(newSubtask);
     } catch (error) {
-      console.log('Request body:', req.body);
-      console.error("Error creating subtask:", error);
-      
-      res.status(500).json({ error: "Error creating subtask" });
+      console.error('Error creating subtask:', error);
+      res.status(500).json({ error: error.message });
     }
   } else {
-    res.setHeader("Allow", ["POST"]);
-    res.status(405).end(`Method ${req.method} not allowed`);
+    res.setHeader('Allow', ['POST']);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }

@@ -5,7 +5,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/solid';
 import Dashboard from "../../dashboard/page.js";
-import { useRouter } from 'next/navigation'; // Use next/navigation for routing
+import { useRouter } from 'next/navigation';
 
 export default function TaskDetails({ params }) {
   const [task, setTask] = useState(null);
@@ -83,8 +83,7 @@ export default function TaskDetails({ params }) {
   };
 
   const addSubtask = () => {
-    // Navigate to the create subtask page
-    router.push(`/components/task/createSubTask`);
+    router.push(`/components/task/createSubTask?taskId=${taskId}`);
   };
 
   if (!task) {
