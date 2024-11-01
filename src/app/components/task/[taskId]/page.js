@@ -1,18 +1,25 @@
 "use client";
-import axios from 'axios';
-import { useEffect, useState } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/solid';
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { PencilIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/solid"; // Only import once
 import Dashboard from "../../dashboard/page.js";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
 export default function TaskDetails({ params }) {
   const [task, setTask] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({ title: '', description: '', logo: '', coverImage: '' });
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    logo: "",
+    coverImage: "",
+  });
   const [logoFile, setLogoFile] = useState(null);
   const [coverImageFile, setCoverImageFile] = useState(null);
+  const [editingSubTaskId, setEditingSubTaskId] = useState(null);
+  const [editingSubTaskTitle, setEditingSubTaskTitle] = useState("");
   const { taskId } = params;
   const router = useRouter();
 
@@ -30,11 +37,14 @@ export default function TaskDetails({ params }) {
       setFormData({
         title: data.title,
         description: data.description,
-        logo: data.logo || '',
-        coverImage: data.coverImage || ''
+        logo: data.logo || "",
+        coverImage: data.coverImage || "",
       });
     } catch (error) {
-      toast.error('Error fetching task details', { position: 'top-right', autoClose: 2000 });
+      toast.error("Error fetching task details", {
+        position: "top-right",
+        autoClose: 2000,
+      });
     }
   };
 
@@ -59,31 +69,85 @@ export default function TaskDetails({ params }) {
 
   const handleUpdateTask = async () => {
     const formDataToSend = new FormData();
-    formDataToSend.append('id', taskId);
-    formDataToSend.append('title', formData.title);
-    formDataToSend.append('description', formData.description);
-    if (logoFile) formDataToSend.append('logo', logoFile);
-    if (coverImageFile) formDataToSend.append('coverImage', coverImageFile);
+    formDataToSend.append("id", taskId);
+    formDataToSend.append("title", formData.title);
+    formDataToSend.append("description", formData.description);
+    if (logoFile) formDataToSend.append("logo", logoFile);
+    if (coverImageFile) formDataToSend.append("coverImage", coverImageFile);
 
     try {
       await axios.post(`/api/task/update-task`, formDataToSend, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       });
-      // Refetch task details to include updated subtasks
       fetchTaskDetails(taskId);
       setIsEditing(false);
       setLogoFile(null);
       setCoverImageFile(null);
-      toast.success('Task updated successfully', { position: 'top-right', autoClose: 2000 });
+      toast.success("Task updated successfully", {
+        position: "top-right",
+        autoClose: 2000,
+      });
     } catch (error) {
-      toast.error('Error updating task', { position: 'top-right', autoClose: 2000 });
+      toast.error("Error updating task", {
+        position: "top-right",
+        autoClose: 2000,
+      });
     }
   };
 
   const addSubtask = () => {
     router.push(`/components/task/createSubTask?taskId=${taskId}`);
+  };
+
+  const handleEditSubTask = (subTask) => {
+    setEditingSubTaskId(subTask.id);
+    setEditingSubTaskTitle(subTask.title);
+  };
+
+  const handleUpdateSubTask = async (subTaskId) => {
+    try {
+      await axios.put(`/api/task/update-subtask`, {
+        id: subTaskId,
+        title: editingSubTaskTitle,
+      });
+      fetchTaskDetails(taskId);
+      setEditingSubTaskId(null);
+      setEditingSubTaskTitle("");
+      toast.success("Subtask updated successfully", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    } catch (error) {
+      toast.error("Error updating subtask", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    }
+  };
+
+  const handleDeleteSubTask = async (subTaskId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this subtask?"
+    );
+    if (confirmDelete) {
+      try {
+        await axios.delete(`/api/task/delete-subtask`, {
+          data: { id: subTaskId },
+        });
+        fetchTaskDetails(taskId);
+        toast.success("Subtask deleted successfully", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+      } catch (error) {
+        toast.error("Error deleting subtask", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+      }
+    }
   };
 
   if (!task) {
@@ -101,7 +165,9 @@ export default function TaskDetails({ params }) {
         {isEditing ? (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Title</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Title
+              </label>
               <input
                 type="text"
                 name="title"
@@ -112,7 +178,9 @@ export default function TaskDetails({ params }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Description
+              </label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -122,7 +190,9 @@ export default function TaskDetails({ params }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Logo Upload</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Logo Upload
+              </label>
               <input
                 type="file"
                 accept="image/*"
@@ -132,7 +202,9 @@ export default function TaskDetails({ params }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Cover Image Upload</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Cover Image Upload
+              </label>
               <input
                 type="file"
                 accept="image/*"
@@ -168,7 +240,9 @@ export default function TaskDetails({ params }) {
                   className="w-16 h-16 rounded-full mr-4 border border-gray-300"
                 />
               )}
-              <h1 className="text-3xl font-semibold text-gray-800">{task.title}</h1>
+              <h1 className="text-3xl font-semibold text-gray-800">
+                {task.title}
+              </h1>
               <button onClick={handleEditTask} className="ml-4 text-blue-800">
                 <PencilIcon className="h-6 w-6" />
               </button>
@@ -178,29 +252,44 @@ export default function TaskDetails({ params }) {
             </div>
 
             <p className="text-gray-600 text-lg mb-6">{task.description}</p>
-             {/* Subtasks Section */}
-             <div className="mt-6">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Subtasks</h2>
+            {/* Subtasks Section */}
+            <div className="mt-6">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+                Subtasks
+              </h2>
               {task.subTasks && task.subTasks.length > 0 ? (
                 <ul className="list-disc list-inside">
                   {task.subTasks.map((subTask) => (
-                    <li key={subTask.id} className="text-gray-700 mb-2">
-                      {subTask.title}
+                    <li
+                      key={subTask.id}
+                      className="flex justify-between items-center text-gray-700 mb-2"
+                    >
+                      <span className="flex-1">{subTask.title}</span>
+                      <div className="flex items-center">
+                        <button
+                          onClick={() => handleEditSubTask(subTask)}
+                          className="text-blue-800"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSubTask(subTask.id)}
+                          className="ml-2 text-red-800"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-gray-600">No subtasks available.</p>
+                <p>No subtasks available.</p>
               )}
-            </div>
-
-            <div className="mt-6">
-              <button 
+              <button
                 onClick={addSubtask}
-                className="flex items-center bg-green-500 text-white p-2 rounded-md"
+                className="mt-4 bg-green-500 text-white p-2 rounded-md"
               >
-                <PlusIcon className="h-5 w-5 mr-2" />
-                Add Subtask
+                <PlusIcon className="h-4 w-4 inline-block" /> Add Subtask
               </button>
             </div>
           </div>
