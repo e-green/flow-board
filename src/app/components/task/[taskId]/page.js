@@ -6,6 +6,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { PencilIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/solid"; // Only import once
 import Dashboard from "../../dashboard/page.js";
 import { useRouter } from "next/navigation";
+import Swal from 'sweetalert2';
+
 
 export default function TaskDetails({ params }) {
   const [task, setTask] = useState(null);
@@ -128,26 +130,36 @@ export default function TaskDetails({ params }) {
   };
 
   const handleDeleteSubTask = async (subTaskId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this subtask?"
-    );
-    if (confirmDelete) {
-      try {
-        await axios.delete(`/api/task/delete-subtask`, {
-          data: { id: subTaskId },
-        });
-        fetchTaskDetails(taskId);
-        toast.success("Subtask deleted successfully", {
-          position: "top-right",
-          autoClose: 2000,
-        });
-      } catch (error) {
-        toast.error("Error deleting subtask", {
-          position: "top-right",
-          autoClose: 2000,
-        });
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'You won’t be able to revert this!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.delete(`/api/task/delete-subtask`, {
+            data: { id: subTaskId },
+          });
+          fetchTaskDetails(taskId);
+          Swal.fire(
+            'Deleted!',
+            'Your subtask has been deleted.',
+            'success'
+          );
+        } catch (error) {
+          Swal.fire(
+            'Error!',
+            'There was an error deleting the subtask.',
+            'error'
+          );
+        }
       }
-    }
+    });
   };
 
   if (!task) {
@@ -283,7 +295,7 @@ export default function TaskDetails({ params }) {
                   ))}
                 </ul>
               ) : (
-                <p>No subtasks available.</p>
+                <p className="text-black">No subtasks available.</p>
               )}
               <button
                 onClick={addSubtask}
