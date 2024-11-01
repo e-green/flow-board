@@ -178,6 +178,22 @@ export default function TaskDetails({ params }) {
             </div>
 
             <p className="text-gray-600 text-lg mb-6">{task.description}</p>
+             {/* Subtasks Section */}
+             <div className="mt-6">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Subtasks</h2>
+              {task.subTasks && task.subTasks.length > 0 ? (
+                <ul className="list-disc list-inside">
+                  {task.subTasks.map((subTask) => (
+                    <li key={subTask.id} className="text-gray-700 mb-2">
+                      {subTask.title}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-600">No subtasks available.</p>
+              )}
+            </div>
+
 
             <div className="mt-6">
               <button 
