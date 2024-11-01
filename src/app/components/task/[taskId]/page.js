@@ -265,7 +265,14 @@ export default function TaskDetails({ params }) {
 
             <p className="text-gray-600 text-lg mb-6">{task.description}</p>
             {/* Subtasks Section */}
+            <button
+                onClick={addSubtask}
+                className="mt-4 bg-green-500 text-white p-2 rounded-md"
+              >
+                <PlusIcon className="h-4 w-4 inline-block" /> Add Subtask
+              </button>
             <div className="mt-6">
+            
               <h2 className="text-2xl font-semibold text-gray-800 mb-4">
                 Subtasks
               </h2>
@@ -297,12 +304,7 @@ export default function TaskDetails({ params }) {
               ) : (
                 <p className="text-black">No subtasks available.</p>
               )}
-              <button
-                onClick={addSubtask}
-                className="mt-4 bg-green-500 text-white p-2 rounded-md"
-              >
-                <PlusIcon className="h-4 w-4 inline-block" /> Add Subtask
-              </button>
+              
             </div>
           </div>
         )}
