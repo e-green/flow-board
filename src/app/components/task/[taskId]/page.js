@@ -66,13 +66,13 @@ export default function TaskDetails({ params }) {
     if (coverImageFile) formDataToSend.append('coverImage', coverImageFile);
 
     try {
-      const response = await axios.post(`/api/task/update-task`, formDataToSend, {
+      await axios.post(`/api/task/update-task`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-      const updatedTask = response.data;
-      setTask(updatedTask);
+      // Refetch task details to include updated subtasks
+      fetchTaskDetails(taskId);
       setIsEditing(false);
       setLogoFile(null);
       setCoverImageFile(null);
@@ -193,7 +193,6 @@ export default function TaskDetails({ params }) {
                 <p className="text-gray-600">No subtasks available.</p>
               )}
             </div>
-
 
             <div className="mt-6">
               <button 
