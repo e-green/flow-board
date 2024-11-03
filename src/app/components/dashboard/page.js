@@ -70,6 +70,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
       {/* Sidebar */}
+      {/* Sidebar */}
       <div
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-blue-950 text-white p-5 transform transition-transform duration-300 ease-in-out ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
