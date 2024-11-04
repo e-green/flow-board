@@ -21,7 +21,12 @@ export default function TaskDetails({ params }) {
   const [logoFile, setLogoFile] = useState(null);
   const [coverImageFile, setCoverImageFile] = useState(null);
   const [editingSubTaskId, setEditingSubTaskId] = useState(null);
-  const [editingSubTaskTitle, setEditingSubTaskTitle] = useState("");
+  const [editingSubTask, setEditingSubTask] = useState({
+    title: "",
+    status: "",
+    images: [],
+    documents: []
+  });
   const { taskId } = params;
   const router = useRouter();
 
@@ -105,18 +110,51 @@ export default function TaskDetails({ params }) {
 
   const handleEditSubTask = (subTask) => {
     setEditingSubTaskId(subTask.id);
-    setEditingSubTaskTitle(subTask.title);
+    setEditingSubTask({
+      title: subTask.title,
+      status: subTask.status || "",
+      images: subTask.images || [],
+      documents: subTask.documents || [],
+    });
   };
 
-  const handleUpdateSubTask = async (subTaskId) => {
+  const handleSubTaskFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditingSubTask({
+      ...editingSubTask,
+      [name]: value,
+    });
+  };
+
+  const handleSubTaskFileChange = (e, type) => {
+    const files = Array.from(e.target.files);
+    setEditingSubTask({
+      ...editingSubTask,
+      [type]: files,
+    });
+  };
+
+  const handleUpdateSubTask = async () => {
+    const formDataToSend = new FormData();
+    formDataToSend.append("id", editingSubTaskId);
+    formDataToSend.append("title", editingSubTask.title);
+    formDataToSend.append("status", editingSubTask.status);
+    editingSubTask.images.forEach((file, index) => {
+      formDataToSend.append(`images[${index}]`, file);
+    });
+    editingSubTask.documents.forEach((file, index) => {
+      formDataToSend.append(`documents[${index}]`, file);
+    });
+
     try {
-      await axios.put(`/api/task/update-subtask`, {
-        id: subTaskId,
-        title: editingSubTaskTitle,
+      await axios.post(`/api/task/update-subtask`, formDataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
       fetchTaskDetails(taskId);
       setEditingSubTaskId(null);
-      setEditingSubTaskTitle("");
+      setEditingSubTask({ title: "", status: "", images: [], documents: [] });
       toast.success("Subtask updated successfully", {
         position: "top-right",
         autoClose: 2000,
@@ -271,30 +309,18 @@ export default function TaskDetails({ params }) {
               >
                 <PlusIcon className="h-4 w-4 inline-block" /> Add Subtask
               </button>
-            <div className="mt-6">
-            
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-                Subtasks
-              </h2>
+              <div className="mt-6">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Subtasks</h2>
               {task.subTasks && task.subTasks.length > 0 ? (
                 <ul className="list-disc list-inside">
                   {task.subTasks.map((subTask) => (
-                    <li
-                      key={subTask.id}
-                      className="flex justify-between items-center text-gray-700 mb-2"
-                    >
+                    <li key={subTask.id} className="flex justify-between items-center text-gray-700 mb-2">
                       <span className="flex-1">{subTask.title}</span>
                       <div className="flex items-center">
-                        <button
-                          onClick={() => handleEditSubTask(subTask)}
-                          className="text-blue-800"
-                        >
+                        <button onClick={() => handleEditSubTask(subTask)} className="text-blue-800">
                           <PencilIcon className="h-4 w-4" />
                         </button>
-                        <button
-                          onClick={() => handleDeleteSubTask(subTask.id)}
-                          className="ml-2 text-red-800"
-                        >
+                        <button onClick={() => handleDeleteSubTask(subTask.id)} className="ml-2 text-red-800">
                           <TrashIcon className="h-4 w-4" />
                         </button>
                       </div>
@@ -304,7 +330,66 @@ export default function TaskDetails({ params }) {
               ) : (
                 <p className="text-black">No subtasks available.</p>
               )}
-              
+
+              {editingSubTaskId && (
+                <div className="mt-4 p-4 border border-gray-300 rounded-md bg-gray-50">
+                  <h3 className="text-xl font-medium mb-2">Edit Subtask</h3>
+                  <div className="mb-2">
+                    <label className="block text-sm font-medium">Title</label>
+                    <input
+                      type="text"
+                      name="title"
+                      value={editingSubTask.title}
+                      onChange={handleSubTaskFormChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <div className="mb-2">
+                    <label className="block text-sm font-medium">Status</label>
+                    <input
+                      type="text"
+                      name="status"
+                      value={editingSubTask.status}
+                      onChange={handleSubTaskFormChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <div className="mb-2">
+                    <label className="block text-sm font-medium">Images</label>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => handleSubTaskFileChange(e, "images")}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <div className="mb-2">
+                    <label className="block text-sm font-medium">Documents</label>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={(e) => handleSubTaskFileChange(e, "documents")}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  />
+                  </div>
+                  <button
+                    onClick={handleUpdateSubTask}
+                    className="mt-4 bg-blue-500 text-white p-2 rounded-md"
+                  >
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingSubTaskId(null);
+                      setEditingSubTask({ title: "", status: "", images: [], documents: [] });
+                    }}
+                    className="mt-2 ml-2 bg-gray-400 text-white p-2 rounded-md"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
