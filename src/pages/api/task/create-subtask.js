@@ -26,9 +26,9 @@ export default async function handler(req, res) {
         data: {
           title,
           taskId: numericTaskId,
-          status, // Save the status
-          images, // Save the array of image URLs
-          documents // Save the array of document URLs
+          status,
+          images: images.length > 0 ? images : [], // Save the array of image URLs
+          documents: documents.length > 0 ? documents : [] // Save the array of document URLs
         },
       });
 

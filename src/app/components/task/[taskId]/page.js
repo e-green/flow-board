@@ -6,8 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { PencilIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/solid"; // Only import once
 import Dashboard from "../../dashboard/page.js";
 import { useRouter } from "next/navigation";
-import Swal from 'sweetalert2';
-
+import Swal from "sweetalert2";
 
 export default function TaskDetails({ params }) {
   const [task, setTask] = useState(null);
@@ -25,7 +24,7 @@ export default function TaskDetails({ params }) {
     title: "",
     status: "",
     images: [],
-    documents: []
+    documents: [],
   });
   const { taskId } = params;
   const router = useRouter();
@@ -113,8 +112,8 @@ export default function TaskDetails({ params }) {
     setEditingSubTask({
       title: subTask.title,
       status: subTask.status || "",
-      images: subTask.images || [],
-      documents: subTask.documents || [],
+      images: subTask.images || [], // Ensure this fetches the current images
+      documents: subTask.documents || [], // Ensure this fetches the current documents
     });
   };
 
@@ -169,14 +168,14 @@ export default function TaskDetails({ params }) {
 
   const handleDeleteSubTask = async (subTaskId) => {
     Swal.fire({
-      title: 'Are you sure?',
-      text: 'You won’t be able to revert this!',
-      icon: 'warning',
+      title: "Are you sure?",
+      text: "You won’t be able to revert this!",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, delete it!',
-      cancelButtonText: 'Cancel',
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
@@ -184,16 +183,12 @@ export default function TaskDetails({ params }) {
             data: { id: subTaskId },
           });
           fetchTaskDetails(taskId);
-          Swal.fire(
-            'Deleted!',
-            'Your subtask has been deleted.',
-            'success'
-          );
+          Swal.fire("Deleted!", "Your subtask has been deleted.", "success");
         } catch (error) {
           Swal.fire(
-            'Error!',
-            'There was an error deleting the subtask.',
-            'error'
+            "Error!",
+            "There was an error deleting the subtask.",
+            "error"
           );
         }
       }
@@ -304,23 +299,34 @@ export default function TaskDetails({ params }) {
             <p className="text-gray-600 text-lg mb-6">{task.description}</p>
             {/* Subtasks Section */}
             <button
-                onClick={addSubtask}
-                className="mt-4 bg-green-500 text-white p-2 rounded-md"
-              >
-                <PlusIcon className="h-4 w-4 inline-block" /> Add Subtask
-              </button>
-              <div className="mt-6">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Subtasks</h2>
+              onClick={addSubtask}
+              className="mt-4 bg-green-500 text-white p-2 rounded-md"
+            >
+              <PlusIcon className="h-4 w-4 inline-block" /> Add Subtask
+            </button>
+            <div className="mt-6">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+                Subtasks
+              </h2>
               {task.subTasks && task.subTasks.length > 0 ? (
                 <ul className="list-disc list-inside">
                   {task.subTasks.map((subTask) => (
-                    <li key={subTask.id} className="flex justify-between items-center text-gray-700 mb-2">
+                    <li
+                      key={subTask.id}
+                      className="flex justify-between items-center text-gray-700 mb-2"
+                    >
                       <span className="flex-1">{subTask.title}</span>
                       <div className="flex items-center">
-                        <button onClick={() => handleEditSubTask(subTask)} className="text-blue-800">
+                        <button
+                          onClick={() => handleEditSubTask(subTask)}
+                          className="text-blue-800"
+                        >
                           <PencilIcon className="h-4 w-4" />
                         </button>
-                        <button onClick={() => handleDeleteSubTask(subTask.id)} className="ml-2 text-red-800">
+                        <button
+                          onClick={() => handleDeleteSubTask(subTask.id)}
+                          className="ml-2 text-red-800"
+                        >
                           <TrashIcon className="h-4 w-4" />
                         </button>
                       </div>
@@ -354,8 +360,29 @@ export default function TaskDetails({ params }) {
                       className="w-full p-2 border border-gray-300 rounded-md"
                     />
                   </div>
+
                   <div className="mb-2">
-                    <label className="block text-sm font-medium">Images</label>
+                    <label className="block text-sm font-medium">
+                      Existing Images
+                    </label>
+                    <div className="flex space-x-2">
+                      {editingSubTask.images &&
+                      editingSubTask.images.length > 0 ? (
+                        editingSubTask.images.map((image, index) => (
+                          <img
+                            key={index}
+                            src={image} // Ensure this points to the correct URL
+                            alt={`Subtask image ${index + 1}`}
+                            className="w-20 h-20 object-cover border border-gray-300 rounded-md"
+                          />
+                        ))
+                      ) : (
+                        <p>No images uploaded.</p>
+                      )}
+                    </div>
+                    <label className="block text-sm font-medium">
+                      Upload New Images
+                    </label>
                     <input
                       type="file"
                       multiple
@@ -364,25 +391,55 @@ export default function TaskDetails({ params }) {
                       className="w-full p-2 border border-gray-300 rounded-md"
                     />
                   </div>
+
                   <div className="mb-2">
-                    <label className="block text-sm font-medium">Documents</label>
+                    <label className="block text-sm font-medium">
+                      Existing Documents
+                    </label>
+                    <div className="flex space-x-2">
+                      {editingSubTask.documents &&
+                      editingSubTask.documents.length > 0 ? (
+                        editingSubTask.documents.map((doc, index) => (
+                          <a
+                            key={index}
+                            href={doc} // Ensure this points to the correct URL
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 underline"
+                          >
+                            Document {index + 1}
+                          </a>
+                        ))
+                      ) : (
+                        <p>No documents uploaded.</p>
+                      )}
+                    </div>
+                    <label className="block text-sm font-medium">
+                      Upload New Documents
+                    </label>
                     <input
                       type="file"
                       multiple
+                      accept=".pdf,.doc,.docx" // Adjust file types as needed
                       onChange={(e) => handleSubTaskFileChange(e, "documents")}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  />
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    />
                   </div>
                   <button
                     onClick={handleUpdateSubTask}
                     className="mt-4 bg-blue-500 text-white p-2 rounded-md"
                   >
-                    Save Changes
+                    Update Subtask
                   </button>
                   <button
                     onClick={() => {
                       setEditingSubTaskId(null);
-                      setEditingSubTask({ title: "", status: "", images: [], documents: [] });
+                      setEditingSubTask({
+                        title: "",
+                        status: "",
+                        images: [],
+                        documents: [],
+                      });
                     }}
                     className="mt-2 ml-2 bg-gray-400 text-white p-2 rounded-md"
                   >
