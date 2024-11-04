@@ -34,43 +34,52 @@ export default function CreateSubTask() {
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
-    const fileType = e.target.name;
-
+    const fileType = e.target.name; // This will be either 'images' or 'documents'
+  
     const uploadPromises = files.map(file => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', 'FlowBoard');
-
+  
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-
+  
       return axios.post(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, formData)
         .then(response => response.data.secure_url);
     });
-
+  
     Promise.all(uploadPromises).then(urls => {
+      console.log(`${fileType} uploaded URLs:`, urls); // Log the uploaded URLs
+  
       setFormData(prevState => ({
         ...prevState,
-        [fileType]: [...prevState[fileType], ...urls],
+        [fileType]: [...prevState[fileType], ...urls], // This line should update the correct field
       }));
     }).catch(error => {
       console.error('Error uploading files:', error);
       toast.error('Error uploading files', { position: 'top-right', autoClose: 2000 });
     });
   };
+  
+  
 
   const handleCreateSubTask = async () => {
     if (!taskId) {
       toast.error('Task ID is missing.', { position: 'top-right', autoClose: 2000 });
       return;
     }
+    
+    console.log("Form Data before submission:", formData); // Log the form data
+    
     try {
-      await axios.post(`/api/task/create-subtask`, { 
+      const response = await axios.post(`/api/task/create-subtask`, { 
         title: formData.title, 
         status: formData.status,
         images: formData.images,
         documents: formData.documents,
         taskId 
       });
+  
+      console.log("API Response:", response.data); // Log API response
       toast.success('Subtask created successfully', { position: 'top-right', autoClose: 2000 });
       router.back();
     } catch (error) {
@@ -78,6 +87,7 @@ export default function CreateSubTask() {
       console.error('Error creating subtask:', error);
     }
   };
+  
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gray-100">
@@ -95,7 +105,7 @@ export default function CreateSubTask() {
               name="title"
               value={formData.title}
               onChange={handleFormChange}
-              className=" p-2 border text-gray-800 border-gray-300 rounded-md w-full focus:outline-none focus:border-blue-400"
+              className="p-2 border text-gray-800 border-gray-300 rounded-md w-full focus:outline-none focus:border-blue-400"
               placeholder="Enter subtask title"
             />
           </div>
@@ -105,10 +115,10 @@ export default function CreateSubTask() {
               name="status"
               value={formData.status}
               onChange={handleFormChange}
-              className=" p-2 border text-gray-800 border-gray-300 rounded-md w-full focus:outline-none focus:border-blue-400"
+              className="p-2 border text-gray-800 border-gray-300 rounded-md w-full focus:outline-none focus:border-blue-400"
             >
               <option value="pending">Pending</option>
-              <option value="not-started">Pending</option>
+              <option value="not-started">Not Started</option>
               <option value="in-progress">In Progress</option>
               <option value="completed">Completed</option>
             </select>
@@ -118,9 +128,10 @@ export default function CreateSubTask() {
             <input
               type="file"
               name="images"
+              accept="image/*"
               multiple
               onChange={handleFileChange}
-              className=" p-2 border text-gray-800 border-gray-300 rounded-md w-full focus:outline-none"
+              className="p-2 border text-gray-800 border-gray-300 rounded-md w-full focus:outline-none"
             />
           </div>
           <div className="mt-4">
@@ -130,7 +141,7 @@ export default function CreateSubTask() {
               name="documents"
               multiple
               onChange={handleFileChange}
-              className=" p-2 border text-gray-800 border-gray-300 rounded-md w-full focus:outline-none"
+              className="p-2 border text-gray-800 border-gray-300 rounded-md w-full focus:outline-none"
             />
           </div>
           <button
