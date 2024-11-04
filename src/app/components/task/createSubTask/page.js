@@ -32,62 +32,60 @@ export default function CreateSubTask() {
     });
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     const fileType = e.target.name; // This will be either 'images' or 'documents'
-  
-    const uploadPromises = files.map(file => {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', 'FlowBoard');
-  
-      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-  
-      return axios.post(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, formData)
-        .then(response => response.data.secure_url);
-    });
-  
-    Promise.all(uploadPromises).then(urls => {
-      console.log(`${fileType} uploaded URLs:`, urls); // Log the uploaded URLs
-  
-      setFormData(prevState => ({
+    const uploadUrls = [];
+
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'FlowBoard');
+
+        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+
+        const response = await axios.post(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, formData);
+        uploadUrls.push(response.data.secure_url);
+      }
+
+      setFormData((prevState) => ({
         ...prevState,
-        [fileType]: [...prevState[fileType], ...urls], // This line should update the correct field
+        [fileType]: [...prevState[fileType], ...uploadUrls],
       }));
-    }).catch(error => {
+
+      toast.success(`${fileType} uploaded successfully`, { position: 'top-right', autoClose: 1000 });
+    } catch (error) {
       console.error('Error uploading files:', error);
-      toast.error('Error uploading files', { position: 'top-right', autoClose: 2000 });
-    });
+      toast.error('Error uploading files', { position: 'top-right', autoClose: 1000 });
+    }
   };
-  
-  
 
   const handleCreateSubTask = async () => {
     if (!taskId) {
-      toast.error('Task ID is missing.', { position: 'top-right', autoClose: 2000 });
+      toast.error('Task ID is missing.', { position: 'top-right', autoClose: 1000 });
       return;
     }
-    
-    console.log("Form Data before submission:", formData); // Log the form data
-    
+
+    console.log("Form Data before submission:", formData);
+
     try {
-      const response = await axios.post(`/api/task/create-subtask`, { 
-        title: formData.title, 
+      const response = await axios.post(`/api/task/create-subtask`, {
+        title: formData.title,
         status: formData.status,
         images: formData.images,
         documents: formData.documents,
-        taskId 
+        taskId,
       });
-  
-      console.log("API Response:", response.data); // Log API response
-      toast.success('Subtask created successfully', { position: 'top-right', autoClose: 2000 });
+
+      //console.log("API Response:", response.data);
+      toast.success('Subtask created successfully', { position: 'top-right', autoClose: 1000 });
       router.back();
     } catch (error) {
-      toast.error('Error creating subtask', { position: 'top-right', autoClose: 2000 });
+      toast.error('Error creating subtask', { position: 'top-right', autoClose: 1000 });
       console.error('Error creating subtask:', error);
     }
   };
-  
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gray-100">
@@ -95,7 +93,7 @@ export default function CreateSubTask() {
         <Dashboard />
       </div>
       <div className="flex-1 flex flex-col items-center justify-center p-6">
-        <ToastContainer position="top-right" autoClose={2000} />
+        <ToastContainer position="top-right" autoClose={1000} />
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md border border-gray-200">
           <h2 className="text-2xl font-semibold mb-6 text-gray-800 text-center">Create Subtask</h2>
           <div>
