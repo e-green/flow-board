@@ -19,6 +19,11 @@ export default function TaskDetails({ params }) {
   });
   const [logoFile, setLogoFile] = useState(null);
   const [coverImageFile, setCoverImageFile] = useState(null);
+
+    // New state variables for image previews
+    const [logoPreview, setLogoPreview] = useState(null);
+    const [coverImagePreview, setCoverImagePreview] = useState(null);
+
   const [editingSubTaskId, setEditingSubTaskId] = useState(null);
   const [editingSubTask, setEditingSubTask] = useState({
     title: "",
@@ -46,6 +51,11 @@ export default function TaskDetails({ params }) {
         logo: data.logo || "",
         coverImage: data.coverImage || "",
       });
+
+      // Set previews based on existing images
+      setLogoPreview(data.logo);
+      setCoverImagePreview(data.coverImage);
+
     } catch (error) {
       toast.error("Error fetching task details", {
         position: "top-right",
@@ -66,11 +76,19 @@ export default function TaskDetails({ params }) {
   };
 
   const handleLogoChange = (e) => {
-    setLogoFile(e.target.files[0]);
+    const file = e.target.files[0];
+    setLogoFile(file);
+    if (file) {
+      setLogoPreview(URL.createObjectURL(file)); // Set the logo preview
+    }
   };
 
   const handleCoverImageChange = (e) => {
-    setCoverImageFile(e.target.files[0]);
+    const file = e.target.files[0];
+    setCoverImageFile(file);
+    if (file) {
+      setCoverImagePreview(URL.createObjectURL(file)); // Set the cover image preview
+    }
   };
 
   const handleUpdateTask = async () => {
@@ -91,6 +109,8 @@ export default function TaskDetails({ params }) {
       setIsEditing(false);
       setLogoFile(null);
       setCoverImageFile(null);
+      setLogoPreview(null); // Reset preview
+      setCoverImagePreview(null); // Reset preview
       toast.success("Task updated successfully", {
         position: "top-right",
         autoClose: 2000,
@@ -244,6 +264,13 @@ export default function TaskDetails({ params }) {
                 onChange={handleLogoChange}
                 className="mt-1 p-2 border text-gray-700 border-gray-300 rounded-md w-full"
               />
+              {logoPreview && (
+                <img
+                  src={logoPreview}
+                  alt="Logo Preview"
+                  className="mt-2 w-32 h-32 object-cover rounded-md border border-gray-300"
+                />
+              )}
             </div>
 
             <div>
@@ -256,6 +283,13 @@ export default function TaskDetails({ params }) {
                 onChange={handleCoverImageChange}
                 className="mt-1 p-2 border text-gray-700 border-gray-300 rounded-md w-full"
               />
+              {coverImagePreview && (
+                <img
+                  src={coverImagePreview}
+                  alt="Cover Image Preview"
+                  className="mt-2 w-32 h-32 object-cover rounded-md border border-gray-300"
+                />
+              )}
             </div>
 
             <button
@@ -339,32 +373,32 @@ export default function TaskDetails({ params }) {
 
               {editingSubTaskId && (
                 <div className="mt-4 p-4 border border-gray-300 rounded-md bg-gray-50">
-                  <h3 className="text-xl font-medium mb-2">Edit Subtask</h3>
+                  <h3 className="text-xl font-medium mb-2 text-gray-700">Edit Subtask</h3>
                   <div className="mb-2">
-                    <label className="block text-sm font-medium">Title</label>
+                    <label className="block text-sm font-medium text-gray-600">Title</label>
                     <input
                       type="text"
                       name="title"
                       value={editingSubTask.title}
                       onChange={handleSubTaskFormChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
+                      className="w-full p-2 border text-black border-gray-300 rounded-md"
                     />
                   </div>
                   <div className="mb-2">
-                    <label className="block text-sm font-medium">Status</label>
+                    <label className="block text-sm font-medium text-gray-600">Status</label>
                     <input
                       type="text"
                       name="status"
                       value={editingSubTask.status}
                       onChange={handleSubTaskFormChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
+                      className="w-full p-2 border border-gray-300 text-black rounded-md"
                     />
                   </div>
 
                   <div className="mb-2">
-                    <label className="block text-sm font-medium">
+                    {/* <label className="block text-sm font-medium">
                       Existing Images
-                    </label>
+                    </label> */}
                     <div className="flex space-x-2">
                       {editingSubTask.images &&
                       editingSubTask.images.length > 0 ? (
@@ -380,7 +414,7 @@ export default function TaskDetails({ params }) {
                         <p>No images uploaded.</p>
                       )}
                     </div>
-                    <label className="block text-sm font-medium">
+                    <label className="block text-sm font-medium text-gray-600">
                       Upload New Images
                     </label>
                     <input
@@ -393,9 +427,9 @@ export default function TaskDetails({ params }) {
                   </div>
 
                   <div className="mb-2">
-                    <label className="block text-sm font-medium">
+                    {/* <label className="block text-sm font-medium">
                       Existing Documents
-                    </label>
+                    </label> */}
                     <div className="flex space-x-2">
                       {editingSubTask.documents &&
                       editingSubTask.documents.length > 0 ? (
@@ -414,7 +448,7 @@ export default function TaskDetails({ params }) {
                         <p>No documents uploaded.</p>
                       )}
                     </div>
-                    <label className="block text-sm font-medium">
+                    <label className="block text-sm font-medium text-gray-600">
                       Upload New Documents
                     </label>
                     <input
@@ -422,7 +456,7 @@ export default function TaskDetails({ params }) {
                       multiple
                       accept=".pdf,.doc,.docx" // Adjust file types as needed
                       onChange={(e) => handleSubTaskFileChange(e, "documents")}
-                      className="w-full p-2 border border-gray-300 rounded-md"
+                      className="w-full p-2 border border-gray-300 rounded-md text-gray-600"
                     />
                   </div>
                   <button
