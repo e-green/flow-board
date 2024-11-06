@@ -13,12 +13,13 @@ import {
   Bars3Icon,
   UserCircleIcon,
   ChevronDownIcon,
-  
 } from "@heroicons/react/24/outline";
 
 export default function Dashboard() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDropdownUser, setShowDropdownUser] = useState(false);
+  const [showSearchInput, setShowSearchInput] = useState(false); // State to control search input visibility
+  const [searchQuery, setSearchQuery] = useState("");
   const [userName, setUserName] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tasks, setTasks] = useState([]);
@@ -26,13 +27,12 @@ export default function Dashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    // Get user data from local storage
     const userData = localStorage.getItem("user");
     if (userData) {
       const user = JSON.parse(userData);
-      setUserName(user.name); // Set the userName state
+      setUserName(user.name);
       setUserId(user.id);
-      fetchTasks(user.id); // Fetch tasks on load
+      fetchTasks(user.id);
     }
   }, []);
 
@@ -47,12 +47,12 @@ export default function Dashboard() {
   };
 
   const handleTaskClick = (taskId) => {
-    router.push(`/components/task/${taskId}`); // Navigate to task details page
+    router.push(`/components/task/${taskId}`);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user"); // Clear user data
-    router.push("/"); // Redirect to the home page
+    localStorage.removeItem("user");
+    router.push("/");
   };
 
   const toggleDropdown = () => {
@@ -65,6 +65,18 @@ export default function Dashboard() {
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const filteredTasks = tasks.filter((task) =>
+    task.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const toggleSearchInput = () => {
+    setShowSearchInput(!showSearchInput);
   };
 
   return (
@@ -83,7 +95,6 @@ export default function Dashboard() {
             className="flex items-center space-x-4 cursor-pointer"
             onClick={toggleDropdownUser}
           >
-            {/* User Icon */}
             <img
               src={`https://ui-avatars.com/api/user/?name=${
                 userName || "User"
@@ -91,24 +102,19 @@ export default function Dashboard() {
               alt="User Avatar"
               className="h-5 w-5 rounded-full"
             />
-            {/* Username */}
             <p className="text-sm text-gray-300">{userName || "User"}</p>
             <ChevronDownIcon className="h-5 w-5 text-gray-300" />
           </div>
 
-          {/* Dropdown Menu */}
           {showDropdownUser && (
             <div className="absolute right-0 mt-2 w-48 bg-blue-900 text-white rounded-lg shadow-lg py-2">
-              {/* My Account Option */}
               <a
-                href="/components/user/account" // Navigate to the account page
-                className=" px-4 py-2 text-gray-50 hover:bg-blue-600 flex items-center"
+                href="/components/user/account"
+                className="px-4 py-2 text-gray-50 hover:bg-blue-600 flex items-center"
               >
                 <UserCircleIcon className="h-5 w-5 mr-2" />
                 My Account
               </a>
-
-              {/* Logout Option */}
               <button
                 onClick={handleLogout}
                 className="flex w-full text-left px-4 py-2 text-gray-50 hover:bg-blue-600 items-center"
@@ -120,28 +126,45 @@ export default function Dashboard() {
           )}
         </div>
 
+        {/* Search Icon */}
+        <div className="mb-4">
+          <button
+            onClick={toggleSearchInput}
+            className="hover:bg-blue-900 text-sm px-4 py-1 rounded flex items-center"
+          >
+            <MagnifyingGlassIcon className="h-5 w-5 mr-2" />
+            Search
+          </button>
+        </div>
+
+        {/* Search Input */}
+        {showSearchInput && (
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="w-full px-3 py-2 rounded-md text-black"
+            />
+          </div>
+        )}
+
         {/* Navigation Items */}
         <nav className="flex flex-col space-y-4">
           <a
             href="/components/dashboard"
             className="hover:bg-blue-900 text-sm px-4 py-1 rounded flex items-center"
           >
-            <HomeIcon className="h-5 w-5 mr-2" /> {/* New icon for Dashboard */}
+            <HomeIcon className="h-5 w-5 mr-2" />
             Dashboard
-          </a>
-          <a
-            href="#"
-            className="hover:bg-blue-900  text-sm px-4 py-1 rounded flex items-center"
-          >
-            <CpuChipIcon className="h-5 w-5 mr-2" />
-            Flow Board AI
           </a>
           <a
             href="#"
             className="hover:bg-blue-900 text-sm px-4 py-1 rounded flex items-center"
           >
-            <MagnifyingGlassIcon className="h-5 w-5 mr-2" />
-            Search
+            <CpuChipIcon className="h-5 w-5 mr-2" />
+            Flow Board AI
           </a>
           <a
             href="#"
@@ -169,49 +192,16 @@ export default function Dashboard() {
             >
               Add Page
             </a>
-            {/* <button onClick={toggleDropdown} className="relative">
-              <EllipsisVerticalIcon className="h-6 w-6 text-white cursor-pointer" />
-              {showDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2">
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-gray-700 hover:bg-gray-200"
-                  >
-                    Rename
-                  </a>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-gray-700 hover:bg-gray-200"
-                  >
-                    Copy Link
-                  </a>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-gray-700 hover:bg-gray-200"
-                  >
-                    Move to Trash
-                  </a>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-gray-700 hover:bg-gray-200"
-                  >
-                    Add to Favorites
-                  </a>
-                </div>
-              )}
-            </button> */}
           </div>
           <div>
             <ul>
-              {tasks.map((task) => (
+              {filteredTasks.map((task) => (
                 <li
                   key={task.id}
                   className="flex items-center justify-between px-4 py-2 cursor-pointer text-gray-400 hover:bg-gray-200"
+                  onClick={() => handleTaskClick(task.id)}
                 >
-                  <div
-                    className="flex items-center"
-                    onClick={() => handleTaskClick(task.id)}
-                  >
+                  <div className="flex items-center">
                     {task.logo && (
                       <img
                         src={task.logo}
@@ -221,8 +211,6 @@ export default function Dashboard() {
                     )}
                     <span>{task.title}</span>
                   </div>
-
-                  
                 </li>
               ))}
             </ul>
