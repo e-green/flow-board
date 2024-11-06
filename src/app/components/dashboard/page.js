@@ -37,6 +37,12 @@ export default function Dashboard() {
       setUserId(user.id);
       fetchTasks(user.id);
     }
+
+    // Load favoritedTasks from localStorage
+    const savedFavorites = localStorage.getItem("favoritedTasks");
+    if (savedFavorites) {
+      setFavoritedTasks(JSON.parse(savedFavorites));
+    }
   }, []);
 
   const fetchTasks = async (userId) => {
@@ -80,11 +86,16 @@ export default function Dashboard() {
 
   const handleFavoriteToggle = (taskId) => {
     setFavoritedTasks((prev) => {
+      let updatedFavorites;
       if (prev.includes(taskId)) {
-        return prev.filter((id) => id !== taskId);
+        updatedFavorites = prev.filter((id) => id !== taskId);
       } else {
-        return [...prev, taskId];
+        updatedFavorites = [...prev, taskId];
       }
+
+      // Save updated favorites to localStorage
+      localStorage.setItem("favoritedTasks", JSON.stringify(updatedFavorites));
+      return updatedFavorites;
     });
   };
 
@@ -240,7 +251,7 @@ export default function Dashboard() {
                     {favoritedTasks.includes(task.id) ? (
                       <SolidStarIcon className="h-5 w-5 text-yellow-500" /> // Fully colored star
                     ) : (
-                      <OutlineStarIcon className="h-5 w-5 text-gray-400" />
+                      <OutlineStarIcon className="h-5 w-5 text-gray-500" /> // Outline star
                     )}
                   </button>
                 </li>
