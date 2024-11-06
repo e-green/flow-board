@@ -169,7 +169,7 @@ export default function Dashboard() {
             >
               Add Page
             </a>
-            <button onClick={toggleDropdown} className="relative">
+            {/* <button onClick={toggleDropdown} className="relative">
               <EllipsisVerticalIcon className="h-6 w-6 text-white cursor-pointer" />
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2">
@@ -199,7 +199,7 @@ export default function Dashboard() {
                   </a>
                 </div>
               )}
-            </button>
+            </button> */}
           </div>
           <div>
             <ul>
