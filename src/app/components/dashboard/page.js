@@ -13,16 +13,19 @@ import {
   Bars3Icon,
   UserCircleIcon,
   ChevronDownIcon,
+  StarIcon as OutlineStarIcon,
+  StarIcon as SolidStarIcon,
 } from "@heroicons/react/24/outline";
 
 export default function Dashboard() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDropdownUser, setShowDropdownUser] = useState(false);
-  const [showSearchInput, setShowSearchInput] = useState(false); // State to control search input visibility
+  const [showSearchInput, setShowSearchInput] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [userName, setUserName] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tasks, setTasks] = useState([]);
+  const [favoritedTasks, setFavoritedTasks] = useState([]);
   const [userId, setUserId] = useState(null);
   const router = useRouter();
 
@@ -71,13 +74,29 @@ export default function Dashboard() {
     setSearchQuery(e.target.value);
   };
 
-  const filteredTasks = tasks.filter((task) =>
-    task.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const toggleSearchInput = () => {
     setShowSearchInput(!showSearchInput);
   };
+
+  const handleFavoriteToggle = (taskId) => {
+    setFavoritedTasks((prev) => {
+      if (prev.includes(taskId)) {
+        return prev.filter((id) => id !== taskId);
+      } else {
+        return [...prev, taskId];
+      }
+    });
+  };
+
+  const filteredTasks = tasks
+    .filter((task) =>
+      task.title.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      const isAFavorited = favoritedTasks.includes(a.id);
+      const isBFavorited = favoritedTasks.includes(b.id);
+      return isBFavorited - isAFavorited;
+    });
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
@@ -211,6 +230,19 @@ export default function Dashboard() {
                     )}
                     <span>{task.title}</span>
                   </div>
+                  <button
+                    className="focus:outline-none"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevents triggering task click
+                      handleFavoriteToggle(task.id);
+                    }}
+                  >
+                    {favoritedTasks.includes(task.id) ? (
+                      <SolidStarIcon className="h-5 w-5 text-yellow-500" /> // Fully colored star
+                    ) : (
+                      <OutlineStarIcon className="h-5 w-5 text-gray-400" />
+                    )}
+                  </button>
                 </li>
               ))}
             </ul>
