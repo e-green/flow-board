@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Calendar from "react-calendar";
+import 'react-calendar/dist/Calendar.css';
 import {
   PlusIcon,
   HomeIcon,
@@ -21,6 +23,7 @@ export default function Dashboard() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDropdownUser, setShowDropdownUser] = useState(false);
   const [showSearchInput, setShowSearchInput] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false); // New state for calendar visibility
   const [searchQuery, setSearchQuery] = useState("");
   const [userName, setUserName] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -38,7 +41,6 @@ export default function Dashboard() {
       fetchTasks(user.id);
     }
 
-    // Load favoritedTasks from localStorage
     const savedFavorites = localStorage.getItem("favoritedTasks");
     if (savedFavorites) {
       setFavoritedTasks(JSON.parse(savedFavorites));
@@ -64,25 +66,15 @@ export default function Dashboard() {
     router.push("/");
   };
 
-  const toggleDropdown = () => {
-    setShowDropdown(!showDropdown);
-  };
+  const toggleDropdown = () => setShowDropdown(!showDropdown);
 
-  const toggleDropdownUser = () => {
-    setShowDropdownUser(!showDropdownUser);
-  };
+  const toggleDropdownUser = () => setShowDropdownUser(!showDropdownUser);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
+  const handleSearchChange = (e) => setSearchQuery(e.target.value);
 
-  const toggleSearchInput = () => {
-    setShowSearchInput(!showSearchInput);
-  };
+  const toggleSearchInput = () => setShowSearchInput(!showSearchInput);
 
   const handleFavoriteToggle = (taskId) => {
     setFavoritedTasks((prev) => {
@@ -92,12 +84,12 @@ export default function Dashboard() {
       } else {
         updatedFavorites = [...prev, taskId];
       }
-
-      // Save updated favorites to localStorage
       localStorage.setItem("favoritedTasks", JSON.stringify(updatedFavorites));
       return updatedFavorites;
     });
   };
+
+  const toggleCalendar = () => setShowCalendar(!showCalendar); // Toggle calendar visibility
 
   const filteredTasks = tasks
     .filter((task) =>
@@ -196,13 +188,13 @@ export default function Dashboard() {
             <CpuChipIcon className="h-5 w-5 mr-2" />
             Flow Board AI
           </a>
-          <a
-            href="#"
+          <button
+            onClick={toggleCalendar}
             className="hover:bg-blue-900 text-sm px-4 py-1 rounded flex items-center"
           >
             <CalendarIcon className="h-5 w-5 mr-2" />
             Calendar
-          </a>
+          </button>
           <a
             href="#"
             className="hover:bg-blue-900 text-sm px-4 py-1 rounded flex items-center"
@@ -211,6 +203,13 @@ export default function Dashboard() {
             Settings
           </a>
         </nav>
+
+        {/* Calendar Component */}
+        {showCalendar && (
+          <div className="mt-4">
+            <Calendar />
+          </div>
+        )}
 
         {/* Private Section */}
         <div className="mt-6">
@@ -244,14 +243,14 @@ export default function Dashboard() {
                   <button
                     className="focus:outline-none"
                     onClick={(e) => {
-                      e.stopPropagation(); // Prevents triggering task click
+                      e.stopPropagation();
                       handleFavoriteToggle(task.id);
                     }}
                   >
                     {favoritedTasks.includes(task.id) ? (
-                      <SolidStarIcon className="h-5 w-5 text-yellow-500" /> // Fully colored star
+                      <SolidStarIcon className="h-5 w-5 text-yellow-500" />
                     ) : (
-                      <OutlineStarIcon className="h-5 w-5 text-gray-500" /> // Outline star
+                      <OutlineStarIcon className="h-5 w-5 text-gray-400" />
                     )}
                   </button>
                 </li>
@@ -261,11 +260,18 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Mobile Sidebar Toggle Button */}
-      <div className="md:hidden flex items-center p-4">
-        <button onClick={toggleSidebar} className="text-blue-950">
-          <Bars3Icon className="h-6 w-6" />
-        </button>
+      {/* Hamburger Menu */}
+      <button
+        onClick={toggleSidebar}
+        className="fixed md:hidden z-50 p-4 bg-white text-blue-950 rounded-full shadow-lg focus:outline-none"
+        style={{ top: "1rem", right: "1rem" }}
+      >
+        <Bars3Icon className="h-6 w-6" />
+      </button>
+
+      {/* Main Content */}
+      <div className="flex-grow p-4 md:ml-64">
+        {/* Dashboard Content */}
       </div>
     </div>
   );
