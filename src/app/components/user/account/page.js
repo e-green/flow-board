@@ -57,9 +57,15 @@ export default function Account() {
       if (response.ok) {
         const updatedUser = await response.json();
         toast.success('Account updated successfully');
+        setTimeout(() => {
+          router.push("/components/dashboard"); // Update this to the actual path of your dashboard
+        }, 1000); 
         localStorage.setItem('user', JSON.stringify(updatedUser)); // Update localStorage
         setUser(updatedUser);
         setIsEditing(false); // Close the editing form
+        setTimeout(() => {
+        router.push("/components/dashboard"); // Update this to the actual path of your dashboard
+      }, 1000); 
       } else {
         toast.error('Failed to update account');
       }
