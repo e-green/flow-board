@@ -1,15 +1,24 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation"; // Updated import for Next.js 13+
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css"; // Import the styles for the toast
 import Dashboard from "../../dashboard/page.js";
 
 // TaskForm component
-
 export default function TaskForm() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [coverImage, setCoverImage] = useState(null);
   const [logo, setLogo] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [mounted, setMounted] = useState(false); // State to track if the component has mounted
+  const router = useRouter(); // For redirection
+
+  // Ensure useRouter is only used client-side
+  useEffect(() => {
+    setMounted(true); // Set mounted to true after the component has been rendered
+  }, []);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -39,21 +48,28 @@ export default function TaskForm() {
 
     const data = await response.json();
     if (response.ok) {
-      alert("Task created successfully");
-      setTitle("");
-      setDescription("");
-      setCoverImage(null);
-      setLogo(null);
+      // Show toast on success
+      toast.success("Task created successfully");
+
+      // Redirect to the dashboard after a brief delay
+      setTimeout(() => {
+        router.push("/components/dashboard"); // Update this to the actual path of your dashboard
+      }, 1000); // Wait 2 seconds before redirecting
     } else {
-      alert(`Error creating task: ${data.error}`);
+      toast.error(`Error creating task: ${data.error}`);
     }
   };
+
+  // Return null while the component is mounting to prevent SSR issues
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex">
       {/* Left side - Dashboard */}
       <div className="w-1/4 bg-gray-100 shadow-lg">
-        <Dashboard />
+      <Dashboard />
       </div>
 
       {/* Right side - TaskForm */}
@@ -109,7 +125,7 @@ export default function TaskForm() {
               <img
                 src={URL.createObjectURL(coverImage)}
                 alt="Cover Preview"
-                className="w-full h-48 object-cover rounded-lg mt-2" // Full-width cover image preview
+                className="w-full h-48 object-cover rounded-lg mt-2"
               />
             )}
           </div>
@@ -130,7 +146,7 @@ export default function TaskForm() {
               <img
                 src={URL.createObjectURL(logo)}
                 alt="Logo Preview"
-                className="w-24 h-24 object-cover rounded-lg border border-gray-300 mt-2" // Logo preview with border
+                className="w-24 h-24 object-cover rounded-lg border border-gray-300 mt-2"
               />
             )}
           </div>
@@ -143,6 +159,9 @@ export default function TaskForm() {
           </button>
         </div>
       </div>
+
+      {/* Toast Container for the messages */}
+      <ToastContainer />
     </div>
   );
 }
