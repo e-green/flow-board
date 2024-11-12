@@ -20,9 +20,9 @@ export default function TaskDetails({ params }) {
   const [logoFile, setLogoFile] = useState(null);
   const [coverImageFile, setCoverImageFile] = useState(null);
 
-    // New state variables for image previews
-    const [logoPreview, setLogoPreview] = useState(null);
-    const [coverImagePreview, setCoverImagePreview] = useState(null);
+  // New state variables for image previews
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [coverImagePreview, setCoverImagePreview] = useState(null);
 
   const [editingSubTaskId, setEditingSubTaskId] = useState(null);
   const [editingSubTask, setEditingSubTask] = useState({
@@ -55,7 +55,6 @@ export default function TaskDetails({ params }) {
       // Set previews based on existing images
       setLogoPreview(data.logo);
       setCoverImagePreview(data.coverImage);
-
     } catch (error) {
       toast.error("Error fetching task details", {
         position: "top-right",
@@ -185,6 +184,35 @@ export default function TaskDetails({ params }) {
       });
     }
   };
+
+  const handleDeleteTask = async (taskId) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won’t be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.delete(`/api/task/delete-task?taskId=${taskId}`); // Pass taskId as a query parameter
+          fetchTaskDetails(taskId);
+          Swal.fire("Deleted!", "Your task has been deleted.", "success");
+        } catch (error) {
+          console.error("Error deleting task:", error); // Log error for debugging
+          Swal.fire(
+            "Error!",
+            "There was an error deleting the task.",
+            "error"
+          );
+        }
+      }
+    });
+  };
+  
 
   const handleDeleteSubTask = async (subTaskId) => {
     Swal.fire({
@@ -325,8 +353,11 @@ export default function TaskDetails({ params }) {
               <button onClick={handleEditTask} className="ml-4 text-blue-800">
                 <PencilIcon className="h-6 w-6" />
               </button>
-              <button className="ml-4 text-red-800">
-                <TrashIcon className="h-6 w-6" />
+              <button
+                onClick={() => handleDeleteTask(task.id)}
+                className="ml-2 text-red-800"
+              >
+                <TrashIcon className="h-4 w-4" />
               </button>
             </div>
 
@@ -373,9 +404,13 @@ export default function TaskDetails({ params }) {
 
               {editingSubTaskId && (
                 <div className="mt-4 p-4 border border-gray-300 rounded-md bg-gray-50">
-                  <h3 className="text-xl font-medium mb-2 text-gray-700">Edit Subtask</h3>
+                  <h3 className="text-xl font-medium mb-2 text-gray-700">
+                    Edit Subtask
+                  </h3>
                   <div className="mb-2">
-                    <label className="block text-sm font-medium text-gray-600">Title</label>
+                    <label className="block text-sm font-medium text-gray-600">
+                      Title
+                    </label>
                     <input
                       type="text"
                       name="title"
@@ -385,7 +420,9 @@ export default function TaskDetails({ params }) {
                     />
                   </div>
                   <div className="mb-2">
-                    <label className="block text-sm font-medium text-gray-600">Status</label>
+                    <label className="block text-sm font-medium text-gray-600">
+                      Status
+                    </label>
                     <input
                       type="text"
                       name="status"
