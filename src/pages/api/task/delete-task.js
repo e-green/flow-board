@@ -17,6 +17,13 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: 'Task not found' });
       }
 
+      // Delete related subtasks
+      await prisma.subTask.deleteMany({
+        where: {
+          taskId: id,
+        },
+      });
+
       // Attempt to delete the task
       await prisma.task.delete({
         where: { id },

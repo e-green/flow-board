@@ -199,7 +199,7 @@ export default function TaskDetails({ params }) {
       if (result.isConfirmed) {
         try {
           await axios.delete(`/api/task/delete-task?taskId=${taskId}`); // Pass taskId as a query parameter
-          fetchTaskDetails(taskId);
+          router.push('/components/dashboard');
           Swal.fire("Deleted!", "Your task has been deleted.", "success");
         } catch (error) {
           console.error("Error deleting task:", error); // Log error for debugging
