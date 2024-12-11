@@ -25,6 +25,10 @@ model User {
   reset_token        String?  // Field to store the reset token
   reset_token_expiry DateTime? // Field to store the token expiration time
   tasks              Task[]   // Relation to tasks
+  assignedTasks      Task[]    @relation("TaskAssignees") // Tasks assigned to the user
+  assignedSubTasks   SubTask[] @relation("UserSubTaskAssignee") // Subtasks assigned to this user
+  githubToken        String?  // Add this field to store the GitHub token
+
 }
 
 model Task {
@@ -37,18 +41,24 @@ model Task {
   subTasks    SubTask[]
   coverImage  String?   // New field for cover image URL
   logo        String?   // New field for logo image URL
+  assignees   User[]    @relation("TaskAssignees") // Relation to User for assignees
 }
 
 
 model SubTask {
-  id        Int       @id @default(autoincrement())
-  title     String
-  taskId    Int     // Change taskId from String to Int
-  task      Task    @relation(fields: [taskId], references: [id]) // Relation to Task
-  status    String   @default("pending") // New field for status
-  images    String[] // New field for storing image URLs (array of strings)
-  documents String[] // New field for storing document URLs (array of strings)
+  id          Int       @id @default(autoincrement())
+  title       String
+  taskId      Int
+  task        Task      @relation(fields: [taskId], references: [id])
+  status      String    @default("pending")
+  images      String[]  // Array of image URLs
+  documents   String[]  // Array of document URLs
+  comments    String?   // Comments on the subtask
+  assignees   User[]    @relation("UserSubTaskAssignee") // Relation to multiple users
 }
+
+
+
 
 
 

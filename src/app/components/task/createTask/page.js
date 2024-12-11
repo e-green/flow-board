@@ -5,19 +5,19 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // Import the styles for the toast
 import Dashboard from "../../dashboard/page.js";
 
-// TaskForm component
 export default function TaskForm() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [coverImage, setCoverImage] = useState(null);
   const [logo, setLogo] = useState(null);
+  const [assignees, setAssignees] = useState([]); // State for multiple assignees
+  const [assigneeEmail, setAssigneeEmail] = useState(""); // State for individual email input
   const [userId, setUserId] = useState(null);
-  const [mounted, setMounted] = useState(false); // State to track if the component has mounted
-  const router = useRouter(); // For redirection
+  const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
-  // Ensure useRouter is only used client-side
   useEffect(() => {
-    setMounted(true); // Set mounted to true after the component has been rendered
+    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -27,6 +27,19 @@ export default function TaskForm() {
       setUserId(user.id);
     }
   }, []);
+
+  const handleAddAssignee = () => {
+    if (assigneeEmail.trim() && !assignees.includes(assigneeEmail)) {
+      setAssignees([...assignees, assigneeEmail.trim()]);
+      setAssigneeEmail("");
+    } else {
+      toast.error("Invalid or duplicate email address");
+    }
+  };
+
+  const handleRemoveAssignee = (email) => {
+    setAssignees(assignees.filter((assignee) => assignee !== email));
+  };
 
   const handleCreateTask = async () => {
     if (!userId) {
@@ -40,46 +53,40 @@ export default function TaskForm() {
     formData.append("coverImage", coverImage);
     formData.append("logo", logo);
     formData.append("userId", userId);
+    formData.append("assignees", JSON.stringify(assignees)); // Send assignees as JSON
 
     const response = await fetch("/api/task/create-task", {
       method: "POST",
-      body: formData, // Send FormData object with image files
+      body: formData,
     });
 
     const data = await response.json();
     if (response.ok) {
-      // Show toast on success
       toast.success("Task created successfully");
-
-      // Redirect to the dashboard after a brief delay
       setTimeout(() => {
-        router.push("/components/dashboard"); // Update this to the actual path of your dashboard
-      }, 1000); // Wait 2 seconds before redirecting
+        router.push("/components/dashboard");
+      }, 1000);
     } else {
       toast.error(`Error creating task: ${data.error}`);
     }
   };
 
-  // Return null while the component is mounting to prevent SSR issues
   if (!mounted) {
     return null;
   }
 
   return (
     <div className="min-h-screen bg-gray-100 flex">
-      {/* Left side - Dashboard */}
       <div className="w-1/4 bg-gray-100 shadow-lg">
-      <Dashboard />
+        <Dashboard />
       </div>
 
-      {/* Right side - TaskForm */}
       <div className="flex-1 flex justify-center items-center p-4">
         <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-2xl">
           <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
             Create a New Task
           </h2>
 
-          {/* Task title input */}
           <div className="mb-4">
             <label htmlFor="title" className="block mb-2 text-sm font-medium text-gray-700">
               Task Title
@@ -94,7 +101,6 @@ export default function TaskForm() {
             />
           </div>
 
-          {/* Task description input */}
           <div className="mb-4">
             <label htmlFor="description" className="block mb-2 text-sm font-medium text-gray-700">
               Task Description
@@ -109,7 +115,6 @@ export default function TaskForm() {
             />
           </div>
 
-          {/* Cover Image input */}
           <div className="mb-4">
             <label htmlFor="coverImage" className="block mb-2 text-sm font-medium text-gray-700">
               Cover Image
@@ -121,16 +126,8 @@ export default function TaskForm() {
               onChange={(e) => setCoverImage(e.target.files[0])}
               className="block w-full text-black border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
             />
-            {coverImage && (
-              <img
-                src={URL.createObjectURL(coverImage)}
-                alt="Cover Preview"
-                className="w-full h-48 object-cover rounded-lg mt-2"
-              />
-            )}
           </div>
 
-          {/* Logo input */}
           <div className="mb-4">
             <label htmlFor="logo" className="block mb-2 text-sm font-medium text-gray-700">
               Logo
@@ -142,13 +139,41 @@ export default function TaskForm() {
               onChange={(e) => setLogo(e.target.files[0])}
               className="block w-full text-black border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
             />
-            {logo && (
-              <img
-                src={URL.createObjectURL(logo)}
-                alt="Logo Preview"
-                className="w-24 h-24 object-cover rounded-lg border border-gray-300 mt-2"
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="assignees" className="block mb-2 text-sm font-medium text-gray-700">
+              Assignees
+            </label>
+            <div className="flex items-center mb-2">
+              <input
+                id="assignees"
+                type="email"
+                value={assigneeEmail}
+                onChange={(e) => setAssigneeEmail(e.target.value)}
+                className="flex-1 p-2 border text-black border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
+                placeholder="Enter email address"
               />
-            )}
+              <button
+                onClick={handleAddAssignee}
+                className="ml-2 bg-blue-950 text-white px-4 py-1 rounded hover:bg-blue-700 transition duration-200"
+              >
+                Add
+              </button>
+            </div>
+            <ul>
+              {assignees.map((email, index) => (
+                <li key={index} className="flex items-center justify-between text-gray-700">
+                  <span>{email}</span>
+                  <button
+                    onClick={() => handleRemoveAssignee(email)}
+                    className="text-red-500 hover:underline"
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
 
           <button
@@ -159,8 +184,6 @@ export default function TaskForm() {
           </button>
         </div>
       </div>
-
-      {/* Toast Container for the messages */}
       <ToastContainer />
     </div>
   );

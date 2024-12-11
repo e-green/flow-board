@@ -9,7 +9,12 @@ export default async function handler(req, res) {
     try {
       const task = await prisma.task.findUnique({
         where: { id: parseInt(taskId) },
-        include: { subTasks: true },
+        include: { 
+          subTasks: true,
+          assignees: {
+            select: { id: true, name: true, email: true }, // Fetch assignees details
+          },
+        },
       });
       res.status(200).json(task);
     } catch (error) {

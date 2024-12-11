@@ -1,7 +1,7 @@
 // pages/api/task/update-task.js
-import { PrismaClient } from '@prisma/client';
-import cloudinary from '../../../../lib/cloudinary';
-import formidable from 'formidable';
+import { PrismaClient } from "@prisma/client";
+import cloudinary from "../../../../lib/cloudinary";
+import formidable from "formidable";
 
 const prisma = new PrismaClient();
 
@@ -12,65 +12,103 @@ export const config = {
 };
 
 const handler = async (req, res) => {
-  if (req.method === 'POST') {
+  if (req.method === "POST") {
     const form = formidable({ multiples: true });
 
     form.parse(req, async (err, fields, files) => {
       if (err) {
-        return res.status(500).json({ error: 'Error parsing the files' });
+        return res.status(500).json({ error: "Error parsing the files" });
       }
 
-      // Extract the first element from the arrays
-      const { id, title, description } = {
-        id: fields.id[0],
-        title: fields.title[0],
-        description: fields.description[0],
-      };
+      const id = parseInt(fields.id[0]);
+      const title = fields.title[0];
+      const description = fields.description[0];
+      let assigneesEmails = [];
+      try {
+        assigneesEmails = fields.assignees
+          ? JSON.parse(fields.assignees[0])
+          : [];
+      } catch (e) {
+        console.error("Error parsing assignees:", e.message);
+        return res.status(400).json({ error: "Invalid assignees format" });
+      }
 
       const logoFile = files.logo ? files.logo[0] : null;
       const coverImageFile = files.coverImage ? files.coverImage[0] : null;
 
       try {
-        let logoUrl = '';
-        let coverImageUrl = '';
+        let logoUrl = "";
+        let coverImageUrl = "";
 
-        // Check and upload the logo file if it exists
-        if (logoFile && logoFile.filepath) {
-          //console.log('Uploading logo file from path:', logoFile.filepath);
-          const logoUpload = await cloudinary.uploader.upload(logoFile.filepath,{
-              folder: 'tasks',
-            });
+        // Upload logo if provided
+        if (logoFile?.filepath) {
+          const logoUpload = await cloudinary.uploader.upload(
+            logoFile.filepath,
+            {
+              folder: "tasks",
+            }
+          );
           logoUrl = logoUpload.secure_url;
         }
 
-        // Check and upload the cover image file if it exists
-        if (coverImageFile && coverImageFile.filepath) {
-          //console.log('Uploading cover image file from path:', coverImageFile.filepath);
-          const coverUpload = await cloudinary.uploader.upload(coverImageFile.filepath, {
-            folder: 'tasks',
-          });
+        // Upload cover image if provided
+        if (coverImageFile?.filepath) {
+          const coverUpload = await cloudinary.uploader.upload(
+            coverImageFile.filepath,
+            {
+              folder: "tasks",
+            }
+          );
           coverImageUrl = coverUpload.secure_url;
         }
 
-        // Update the task in the database
+        let assigneesEmails = [];
+        try {
+          assigneesEmails = fields.assignees
+            ? JSON.parse(fields.assignees[0])
+            : [];
+        } catch (e) {
+          console.error("Error parsing assignees:", e.message);
+          return res.status(400).json({ error: "Invalid assignees format" });
+        }
+
+        const assignees = await prisma.user.findMany({
+          where: { email: { in: assigneesEmails } },
+          select: { id: true, email: true }, // Include email for validation
+        });
+        
+
+        if (assignees.length !== assigneesEmails.length) {
+          const invalidEmails = assigneesEmails.filter(
+            (email) => !assignees.some((user) => user.email === email)
+          );
+          return res
+            .status(400)
+            .json({ error: `Invalid assignees: ${invalidEmails.join(", ")}` });
+        }
+
+        // Update the task
         const updatedTask = await prisma.task.update({
-          where: { id: Number(id) },
+          where: { id },
           data: {
             title,
             description,
             logo: logoUrl || undefined,
             coverImage: coverImageUrl || undefined,
+            assignees: {
+              set: assignees.map((assignee) => ({ id: assignee.id })), // Replace existing assignees
+            },
           },
         });
 
-        return res.status(200).json(updatedTask);
+        res.status(200).json(updatedTask);
       } catch (error) {
-        console.error('Error updating task:', error);
-        return res.status(500).json({ error: 'Error updating task' });
+        console.error("Error updating task:", error);
+        res.status(500).json({ error: "Error updating task" });
       }
     });
   } else {
-    res.setHeader('Allow', ['POST']);
+    res.setHeader("Allow", ["POST"]);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 };

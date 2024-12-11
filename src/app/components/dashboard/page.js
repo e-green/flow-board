@@ -16,6 +16,8 @@ import {
   StarIcon as OutlineStarIcon,
   StarIcon as SolidStarIcon,
 } from "@heroicons/react/24/outline";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye } from "@fortawesome/free-solid-svg-icons";
 
 export default function Dashboard() {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -28,6 +30,7 @@ export default function Dashboard() {
   const [favoritedTasks, setFavoritedTasks] = useState([]);
   const [userId, setUserId] = useState(null);
   const router = useRouter();
+  const [githubRepos, setGithubRepos] = useState([]);
 
   useEffect(() => {
     const userData = localStorage.getItem("user");
@@ -38,12 +41,47 @@ export default function Dashboard() {
       fetchTasks(user.id);
     }
 
+    // Fetch GitHub repositorie
+    fetchGitHubRepos();
+
     // Load favoritedTasks from localStorage
     const savedFavorites = localStorage.getItem("favoritedTasks");
     if (savedFavorites) {
       setFavoritedTasks(JSON.parse(savedFavorites));
     }
   }, []);
+
+  const fetchGitHubRepos = async () => {
+    try {
+      const userId = JSON.parse(localStorage.getItem("user")).id;
+      const tokenResponse = await fetch(
+        `/api/user/get-github-token?userId=${userId}`
+      );
+
+      if (!tokenResponse.ok) {
+        console.error("GitHub token not found for this user");
+        return;
+      }
+
+      const { token } = await tokenResponse.json();
+
+      const reposResponse = await fetch("https://api.github.com/user/repos", {
+        headers: { Authorization: `token ${token}` },
+      });
+
+      if (reposResponse.ok) {
+        const repos = await reposResponse.json();
+        setGithubRepos(repos);
+      } else {
+        console.error(
+          "Error fetching GitHub repositories:",
+          await reposResponse.text()
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching GitHub repositories:", error);
+    }
+  };
 
   const fetchTasks = async (userId) => {
     try {
@@ -259,8 +297,43 @@ export default function Dashboard() {
             </ul>
           </div>
         </div>
-      </div>
 
+        <div className="mb-6">
+          <h3 className="text-xs font-bold mb-2">GitHub Repositories</h3>
+
+          <button
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={() => (window.location.href = "/components/gitHubRepo")}
+          >
+            Generate GitHub Token
+          </button>
+          <ul>
+            {githubRepos.slice(0, 5).map((repo) => (
+              <li
+                key={repo.id}
+                className="flex items-center justify-between px-4 py-2 text-gray-400 hover:bg-gray-200 rounded"
+              >
+                <a
+                  href={repo.html_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="truncate"
+                >
+                  {repo.name}
+                </a>
+                <button
+                  className="ml-4 text-blue-500 hover:text-blue-700"
+                  onClick={() =>
+                    (window.location.href = `/components/gitHubRepo/commits/${repo.name}`)
+                  }
+                >
+                  <FontAwesomeIcon icon={faEye} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
 
       {/* Mobile Sidebar Toggle Button */}
       <div className="md:hidden flex items-center p-4">

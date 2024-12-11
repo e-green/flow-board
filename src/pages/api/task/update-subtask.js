@@ -1,6 +1,13 @@
 import { PrismaClient } from "@prisma/client";
-
+import cloudinary from "../../../../lib/cloudinary";
+import formidable from "formidable";
 const prisma = new PrismaClient();
+
+export const config = {
+  api: {
+    bodyParser: false, // Disable Next.js body parsing for file upload handling
+  },
+};
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {

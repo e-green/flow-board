@@ -3,42 +3,54 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
-  if (req.method === 'POST') {
+  if (req.method === "POST") {
     try {
-      const { title, taskId, status, images, documents } = req.body;
-      const numericTaskId = Number(taskId);
+      const { title, taskId, status, images = [], documents = [], comments, assignees = [] } = req.body;
 
+      // Validate taskId
+      const numericTaskId = parseInt(taskId, 10);
       if (isNaN(numericTaskId)) {
-        return res.status(400).json({ error: 'Invalid taskId: taskId should be a number.' });
+        return res.status(400).json({ error: "Invalid taskId" });
       }
 
-      // Check if the taskId exists
-      const taskExists = await prisma.task.findUnique({
-        where: { id: numericTaskId },
+      // Validate assignee emails
+      const validAssignees = await prisma.user.findMany({
+        where: {
+          email: { in: assignees },
+        },
+        select: { id: true },
       });
 
-      if (!taskExists) {
-        return res.status(404).json({ error: `Task with id ${numericTaskId} does not exist.` });
+      if (validAssignees.length !== assignees.length) {
+        const invalidEmails = assignees.filter(
+          email => !validAssignees.some(user => user.email === email)
+        );
+        return res.status(400).json({
+          error: `The following emails are not valid: ${invalidEmails.join(", ")}`,
+        });
       }
 
-      // Create the subtask
+      // Create subtask
       const newSubtask = await prisma.subTask.create({
         data: {
           title,
           taskId: numericTaskId,
           status,
-          images: images.length > 0 ? images : [], // Save the array of image URLs
-          documents: documents.length > 0 ? documents : [] // Save the array of document URLs
+          images,
+          documents,
+          comments,
+          assignees: {
+            connect: validAssignees.map(assignee => ({ id: assignee.id })),
+          },
         },
       });
 
-      res.status(201).json(newSubtask);
+      res.status(201).json({ subtask: newSubtask });
     } catch (error) {
-      console.error('Error creating subtask:', error);
-      res.status(500).json({ error: error.message });
+      console.error("Error creating subtask:", error);
+      res.status(500).json({ error: "Error creating subtask" });
     }
   } else {
-    res.setHeader('Allow', ['POST']);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+    res.status(405).json({ error: "Method not allowed" });
   }
 }

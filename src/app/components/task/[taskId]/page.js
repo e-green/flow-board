@@ -16,6 +16,7 @@ export default function TaskDetails({ params }) {
     description: "",
     logo: "",
     coverImage: "",
+    assignees: "",
   });
   const [logoFile, setLogoFile] = useState(null);
   const [coverImageFile, setCoverImageFile] = useState(null);
@@ -30,6 +31,7 @@ export default function TaskDetails({ params }) {
     status: "",
     images: [],
     documents: [],
+    assignees: "",
   });
   const { taskId } = params;
   const router = useRouter();
@@ -50,6 +52,7 @@ export default function TaskDetails({ params }) {
         description: data.description,
         logo: data.logo || "",
         coverImage: data.coverImage || "",
+        assignees: data.assignees.map((assignee) => assignee.email).join(", "), // Convert to comma-separated string
       });
 
       // Set previews based on existing images
@@ -95,6 +98,8 @@ export default function TaskDetails({ params }) {
     formDataToSend.append("id", taskId);
     formDataToSend.append("title", formData.title);
     formDataToSend.append("description", formData.description);
+    formDataToSend.append("assignees", JSON.stringify(formData.assignees.split(",").map(email => email.trim())));
+
     if (logoFile) formDataToSend.append("logo", logoFile);
     if (coverImageFile) formDataToSend.append("coverImage", coverImageFile);
 
@@ -104,21 +109,11 @@ export default function TaskDetails({ params }) {
           "Content-Type": "multipart/form-data",
         },
       });
+      
       fetchTaskDetails(taskId);
       setIsEditing(false);
-      setLogoFile(null);
-      setCoverImageFile(null);
-      setLogoPreview(null); // Reset preview
-      setCoverImagePreview(null); // Reset preview
-      toast.success("Task updated successfully", {
-        position: "top-right",
-        autoClose: 2000,
-      });
     } catch (error) {
-      toast.error("Error updating task", {
-        position: "top-right",
-        autoClose: 2000,
-      });
+      toast.error("Error updating task");
     }
   };
 
@@ -199,20 +194,15 @@ export default function TaskDetails({ params }) {
       if (result.isConfirmed) {
         try {
           await axios.delete(`/api/task/delete-task?taskId=${taskId}`); // Pass taskId as a query parameter
-          router.push('/components/dashboard');
+          router.push("/components/dashboard");
           Swal.fire("Deleted!", "Your task has been deleted.", "success");
         } catch (error) {
           console.error("Error deleting task:", error); // Log error for debugging
-          Swal.fire(
-            "Error!",
-            "There was an error deleting the task.",
-            "error"
-          );
+          Swal.fire("Error!", "There was an error deleting the task.", "error");
         }
       }
     });
   };
-  
 
   const handleDeleteSubTask = async (subTaskId) => {
     Swal.fire({
@@ -250,7 +240,7 @@ export default function TaskDetails({ params }) {
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
       <ToastContainer position="top-right" autoClose={2000} />
-      <div className="w-64 bg-blue-950 text-white p-5">
+      <div className="bg-gray-100 lg:w-1/4 shadow-lg p-0">
         <Dashboard />
       </div>
 
@@ -265,6 +255,19 @@ export default function TaskDetails({ params }) {
                 type="text"
                 name="title"
                 value={formData.title}
+                onChange={handleFormChange}
+                className="mt-1 p-2 border text-gray-700 border-gray-300 rounded-md w-full"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Assignees (Comma-separated emails)
+              </label>
+              <input
+                type="text"
+                name="assignees"
+                value={formData.assignees}
                 onChange={handleFormChange}
                 className="mt-1 p-2 border text-gray-700 border-gray-300 rounded-md w-full"
               />
@@ -350,6 +353,43 @@ export default function TaskDetails({ params }) {
               <h1 className="text-3xl font-semibold text-gray-800">
                 {task.title}
               </h1>
+              <div className="mt-0 ml-8">
+                {/* <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                  Assignees
+                </h3> */}
+                {task.assignees && task.assignees.length > 0 ? (
+                  <ul className="space-y-0">
+                    {task.assignees.map((assignee) => (
+                      <li
+                        key={assignee.id}
+                        className="flex justify-between items-center p-1 bg-gray-50 rounded-lg shadow-sm hover:bg-gray-100 transition duration-200"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <svg
+                            className="w-3 h-3 text-blue-900"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            aria-hidden="true"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zM8 10.707a1 1 0 0 0 1.415 0L10 9.414l.585.707a1 1 0 1 0 1.415-1.414L10 7.586l-.585.707a1 1 0 1 0-1.415-1.414L8 8.293l-.585-.707a1 1 0 1 0-1.415 1.414l.585.707 1.415-.707z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          <span className="text-gray-700 font-normal">
+                            {assignee.email}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500">No assignees assigned yet.</p>
+                )}
+              </div>
+
               <button onClick={handleEditTask} className="ml-4 text-blue-800">
                 <PencilIcon className="h-6 w-6" />
               </button>
