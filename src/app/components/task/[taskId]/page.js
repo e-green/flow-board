@@ -24,6 +24,7 @@ const ListView = ({ task, onEditSubTask, onDeleteSubTask }) => {
   const filteredSubTasks = task.subTasks?.filter((subTask) => 
     subTask.title.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
+  
   return (
     <div className="bg-white shadow-md rounded-md p-0">
       {/* Search input */}
@@ -84,28 +85,24 @@ const ListView = ({ task, onEditSubTask, onDeleteSubTask }) => {
 const BoardView = ({ task, onEditSubTask, onDeleteSubTask }) => {
   // Define status columns
   const columns = [
-    { id: "todo", title: "To Do", color: "bg-gray-200" },
-    { id: "inProgress", title: "In Progress", color: "bg-yellow-200" },
-    { id: "done", title: "Done", color: "bg-green-200" },
+    { id: "not-started", title: "Not Started", color: "bg-gray-100" },
+    { id: "pending", title: "Pending", color: "bg-yellow-100" },
+    { id: "in-progress", title: "In Progress", color: "bg-blue-100" },
+    { id: "completed", title: "Completed", color: "bg-green-100" },
   ];
 
   // Group subtasks by status
   const getSubtasksByStatus = () => {
     const groupedTasks = {
-      todo: [],
-      inProgress: [],
-      done: [],
+      "not-started": [],
+      "pending": [],
+      "in-progress": [],
+      "completed": [],
     };
 
     task.subTasks?.forEach((subTask) => {
-      const status = subTask.status?.toLowerCase() || "todo";
-      if (status.includes("progress")) {
-        groupedTasks.inProgress.push(subTask);
-      } else if (status.includes("done")) {
-        groupedTasks.done.push(subTask);
-      } else {
-        groupedTasks.todo.push(subTask);
-      }
+      const status = subTask.status?.toLowerCase() || "not-started";
+      groupedTasks[status]?.push(subTask) || groupedTasks["not-started"].push(subTask);
     });
 
     return groupedTasks;
@@ -131,23 +128,25 @@ const BoardView = ({ task, onEditSubTask, onDeleteSubTask }) => {
                   className="bg-white p-3 rounded-lg shadow-sm"
                 >
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium">{subTask.title}</span>
+                    <span className="font-medium text-gray-800">{subTask.title}</span>
                     <div className="flex space-x-2">
                       <button
                         onClick={() => onEditSubTask(subTask)}
                         className="text-blue-600 hover:text-blue-800"
+                        aria-label="Edit Subtask"
                       >
-                        Edit
+                        <PencilIcon className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => onDeleteSubTask(subTask.id)}
                         className="text-red-600 hover:text-red-800"
+                        aria-label="Delete Subtask"
                       >
-                        Delete
+                        <TrashIcon className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-200">
                     {subTask.assignees && subTask.assignees.length > 0
                       ? subTask.assignees.map((a) => a.email).join(", ")
                       : "No Assignees"}
