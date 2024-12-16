@@ -9,6 +9,7 @@ import {
   PlusIcon,
   ViewColumnsIcon,
   ListBulletIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/react/24/solid";
 import Dashboard from "../../dashboard/page.js";
 import { useRouter } from "next/navigation";
@@ -17,12 +18,30 @@ import Swal from "sweetalert2";
 // List View Component
 
 const ListView = ({ task, onEditSubTask, onDeleteSubTask }) => {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Filter subtasks based on search term
+  const filteredSubTasks = task.subTasks?.filter((subTask) => 
+    subTask.title.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
   return (
-    <div className="bg-white shadow-md rounded-md p-2">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Subtasks</h2>
-      {task.subTasks && task.subTasks.length > 0 ? (
+    <div className="bg-white shadow-md rounded-md p-0">
+      {/* Search input */}
+      <div className="flex items-center mb-0 ml-36  px-4">
+        <MagnifyingGlassIcon className="h-5 w-5 text-gray-500 mr-2" />
+        <input
+          type="text"
+          placeholder="Search subtasks..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-min p-2 border border-gray-300 rounded-md text-gray-800"
+        />
+      </div>
+
+      <h2 className="text-2xl font-semibold text-gray-800 mb-4 px-4">Subtasks</h2>
+      {filteredSubTasks.length > 0 ? (
         <div className="space-y-4">
-          {task.subTasks.map((subTask) => (
+          {filteredSubTasks.map((subTask) => (
             <div
               key={subTask.id}
               className="flex justify-between items-center p-4 bg-gray-100 rounded-lg hover:bg-gray-200"
@@ -185,31 +204,47 @@ export default function TaskDetails({ params }) {
 
   // Render view toggle
   const renderViewToggle = () => (
-    <div className="flex justify-end space-x-2 mb-4">
+    <div className="flex justify-between items-center mb-4">
+      {/* Add Task Button */}
       <button
-        onClick={() => setViewType("list")}
-        className={`p-2 rounded-md ${
-          viewType === "list"
-            ? "bg-blue-500 text-white"
-            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-        }`}
+        onClick={addSubtask} // Replace `addTask` with your function for adding a task
+        className="bg-green-600 text-white p-2 rounded-md flex items-center space-x-2 hover:bg-green-700"
       >
-        <ListBulletIcon className="h-5 w-5 inline-block mr-1" />
-        List View
+        <PlusIcon className="h-5 w-5" />
+        <span>Add Subtask</span>
       </button>
-      <button
-        onClick={() => setViewType("board")}
-        className={`p-2 rounded-md ${
-          viewType === "board"
-            ? "bg-blue-500 text-white"
-            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-        }`}
-      >
-        <ViewColumnsIcon className="h-5 w-5 inline-block mr-1" />
-        Board View
-      </button>
+
+      
+
+  
+      {/* View Toggle Buttons */}
+      <div className="flex space-x-2">
+        <button
+          onClick={() => setViewType("list")}
+          className={`p-2 rounded-md flex items-center space-x-1 ${
+            viewType === "list"
+              ? "bg-blue-800 text-white"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          }`}
+        >
+          <ListBulletIcon className="h-5 w-5" />
+          <span>List View</span>
+        </button>
+        <button
+          onClick={() => setViewType("board")}
+          className={`p-2 rounded-md flex items-center space-x-1 ${
+            viewType === "board"
+              ? "bg-blue-800 text-white"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          }`}
+        >
+          <ViewColumnsIcon className="h-5 w-5" />
+          <span>Board View</span>
+        </button>
+      </div>
     </div>
   );
+  
 
   const fetchTaskDetails = async (taskId) => {
     try {
@@ -590,12 +625,6 @@ export default function TaskDetails({ params }) {
             {/* View Toggle and Subtask Views */}
             {renderViewToggle()}
             
-            <button
-              onClick={addSubtask}
-              className="mt-4 bg-green-500 text-white p-2 rounded-md"
-            >
-              <PlusIcon className="h-4 w-4 inline-block" /> Add Subtask
-            </button>
 
             {viewType === "list" ? (
               <ListView
