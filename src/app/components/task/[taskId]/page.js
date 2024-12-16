@@ -3,10 +3,147 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { PencilIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/solid"; // Only import once
+import {
+  PencilIcon,
+  TrashIcon,
+  PlusIcon,
+  ViewColumnsIcon,
+  ListBulletIcon,
+} from "@heroicons/react/24/solid";
 import Dashboard from "../../dashboard/page.js";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
+
+// List View Component
+
+const ListView = ({ task, onEditSubTask, onDeleteSubTask }) => {
+  return (
+    <div className="bg-white shadow-md rounded-md p-2">
+      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Subtasks</h2>
+      {task.subTasks && task.subTasks.length > 0 ? (
+        <div className="space-y-4">
+          {task.subTasks.map((subTask) => (
+            <div
+              key={subTask.id}
+              className="flex justify-between items-center p-4 bg-gray-100 rounded-lg hover:bg-gray-200"
+            >
+              <div>
+                <div className="text-black font-medium">{subTask.title}</div>
+                <div className="text-sm text-gray-600">
+                  {subTask.assignees && subTask.assignees.length > 0
+                    ? subTask.assignees.map((a) => a.email).join(", ")
+                    : "No Assignees"}
+                </div>
+              </div>
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => onEditSubTask(subTask)}
+                  className="text-blue-600 hover:text-blue-800"
+                  aria-label="Edit Subtask"
+                >
+                  <PencilIcon className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => onDeleteSubTask(subTask.id)}
+                  className="text-red-600 hover:text-red-800"
+                  aria-label="Delete Subtask"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-gray-500 text-center">No subtasks available.</p>
+      )}
+    </div>
+  );
+};
+
+// Board View Component
+const BoardView = ({ task, onEditSubTask, onDeleteSubTask }) => {
+  // Define status columns
+  const columns = [
+    { id: "todo", title: "To Do", color: "bg-gray-200" },
+    { id: "inProgress", title: "In Progress", color: "bg-yellow-200" },
+    { id: "done", title: "Done", color: "bg-green-200" },
+  ];
+
+  // Group subtasks by status
+  const getSubtasksByStatus = () => {
+    const groupedTasks = {
+      todo: [],
+      inProgress: [],
+      done: [],
+    };
+
+    task.subTasks?.forEach((subTask) => {
+      const status = subTask.status?.toLowerCase() || "todo";
+      if (status.includes("progress")) {
+        groupedTasks.inProgress.push(subTask);
+      } else if (status.includes("done")) {
+        groupedTasks.done.push(subTask);
+      } else {
+        groupedTasks.todo.push(subTask);
+      }
+    });
+
+    return groupedTasks;
+  };
+
+  const groupedSubtasks = getSubtasksByStatus();
+
+  return (
+    <div className="grid grid-cols-3 gap-4">
+      {columns.map((column) => (
+        <div
+          key={column.id}
+          className={`${column.color} rounded-lg p-4 shadow-md`}
+        >
+          <h3 className="text-xl font-semibold mb-4 text-gray-800">
+            {column.title}
+          </h3>
+          {groupedSubtasks[column.id].length > 0 ? (
+            <div className="space-y-2">
+              {groupedSubtasks[column.id].map((subTask) => (
+                <div
+                  key={subTask.id}
+                  className="bg-white p-3 rounded-lg shadow-sm"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium">{subTask.title}</span>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => onEditSubTask(subTask)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => onDeleteSubTask(subTask.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {subTask.assignees && subTask.assignees.length > 0
+                      ? subTask.assignees.map((a) => a.email).join(", ")
+                      : "No Assignees"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center">No subtasks</p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export default function TaskDetails({ params }) {
   const [task, setTask] = useState(null);
@@ -33,6 +170,10 @@ export default function TaskDetails({ params }) {
     documents: [],
     assignees: "",
   });
+
+  // New state for view type
+  const [viewType, setViewType] = useState("list"); // 'list' or 'board'
+
   const { taskId } = params;
   const router = useRouter();
 
@@ -41,6 +182,34 @@ export default function TaskDetails({ params }) {
       fetchTaskDetails(taskId);
     }
   }, [taskId]);
+
+  // Render view toggle
+  const renderViewToggle = () => (
+    <div className="flex justify-end space-x-2 mb-4">
+      <button
+        onClick={() => setViewType("list")}
+        className={`p-2 rounded-md ${
+          viewType === "list"
+            ? "bg-blue-500 text-white"
+            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+        }`}
+      >
+        <ListBulletIcon className="h-5 w-5 inline-block mr-1" />
+        List View
+      </button>
+      <button
+        onClick={() => setViewType("board")}
+        className={`p-2 rounded-md ${
+          viewType === "board"
+            ? "bg-blue-500 text-white"
+            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+        }`}
+      >
+        <ViewColumnsIcon className="h-5 w-5 inline-block mr-1" />
+        Board View
+      </button>
+    </div>
+  );
 
   const fetchTaskDetails = async (taskId) => {
     try {
@@ -98,7 +267,10 @@ export default function TaskDetails({ params }) {
     formDataToSend.append("id", taskId);
     formDataToSend.append("title", formData.title);
     formDataToSend.append("description", formData.description);
-    formDataToSend.append("assignees", JSON.stringify(formData.assignees.split(",").map(email => email.trim())));
+    formDataToSend.append(
+      "assignees",
+      JSON.stringify(formData.assignees.split(",").map((email) => email.trim()))
+    );
 
     if (logoFile) formDataToSend.append("logo", logoFile);
     if (coverImageFile) formDataToSend.append("coverImage", coverImageFile);
@@ -109,7 +281,7 @@ export default function TaskDetails({ params }) {
           "Content-Type": "multipart/form-data",
         },
       });
-      
+
       fetchTaskDetails(taskId);
       setIsEditing(false);
     } catch (error) {
@@ -126,6 +298,7 @@ export default function TaskDetails({ params }) {
     setEditingSubTask({
       title: subTask.title,
       status: subTask.status || "",
+      assignees: subTask.assignees,
       images: subTask.images || [], // Ensure this fetches the current images
       documents: subTask.documents || [], // Ensure this fetches the current documents
     });
@@ -152,6 +325,11 @@ export default function TaskDetails({ params }) {
     formDataToSend.append("id", editingSubTaskId);
     formDataToSend.append("title", editingSubTask.title);
     formDataToSend.append("status", editingSubTask.status);
+    formDataToSend.append(
+      "assignees",
+      JSON.stringify(formData.assignees.split(",").map((email) => email.trim()))
+    );
+
     editingSubTask.images.forEach((file, index) => {
       formDataToSend.append(`images[${index}]`, file);
     });
@@ -167,7 +345,13 @@ export default function TaskDetails({ params }) {
       });
       fetchTaskDetails(taskId);
       setEditingSubTaskId(null);
-      setEditingSubTask({ title: "", status: "", images: [], documents: [] });
+      setEditingSubTask({
+        title: "",
+        status: "",
+        assignees: "",
+        images: [],
+        documents: [],
+      });
       toast.success("Subtask updated successfully", {
         position: "top-right",
         autoClose: 2000,
@@ -183,7 +367,7 @@ export default function TaskDetails({ params }) {
   const handleDeleteTask = async (taskId) => {
     Swal.fire({
       title: "Are you sure?",
-      text: "You won’t be able to revert this!",
+      text: "You won't be able to revert this!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -207,7 +391,7 @@ export default function TaskDetails({ params }) {
   const handleDeleteSubTask = async (subTaskId) => {
     Swal.fire({
       title: "Are you sure?",
-      text: "You won’t be able to revert this!",
+      text: "You won't be able to revert this!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -403,13 +587,38 @@ export default function TaskDetails({ params }) {
 
             <p className="text-gray-600 text-lg mb-6">{task.description}</p>
             {/* Subtasks Section */}
+            {/* View Toggle and Subtask Views */}
+            {renderViewToggle()}
+            
             <button
               onClick={addSubtask}
               className="mt-4 bg-green-500 text-white p-2 rounded-md"
             >
               <PlusIcon className="h-4 w-4 inline-block" /> Add Subtask
             </button>
-            <div className="mt-6">
+
+            {viewType === "list" ? (
+              <ListView
+                task={task}
+                onEditSubTask={handleEditSubTask}
+                onDeleteSubTask={handleDeleteSubTask}
+              />
+            ) : (
+              <BoardView
+                task={task}
+                onEditSubTask={handleEditSubTask}
+                onDeleteSubTask={handleDeleteSubTask}
+              />
+            )}
+            
+
+            {/* <button
+              onClick={addSubtask}
+              className="mt-4 bg-green-500 text-white p-2 rounded-md"
+            >
+              <PlusIcon className="h-4 w-4 inline-block" /> Add Subtask
+            </button> */}
+            {/* <div className="mt-6">
               <h2 className="text-2xl font-semibold text-gray-800 mb-4">
                 Subtasks
               </h2>
@@ -421,6 +630,45 @@ export default function TaskDetails({ params }) {
                       className="flex justify-between items-center text-gray-700 mb-2"
                     >
                       <span className="flex-1">{subTask.title}</span>
+
+                      <div className="mt-0 ml-8"> */}
+                        {/* <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                  Assignees
+                </h3> */}
+                        {/* {subTask.assignees && subTask.assignees.length > 0 ? (
+                          <ul className="space-y-0">
+                            {subTask.assignees.map((assignee) => (
+                              <li
+                                key={assignee.id}
+                                className="flex justify-between items-center p-1 bg-gray-50 rounded-lg shadow-sm hover:bg-gray-100 transition duration-200"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <svg
+                                    className="w-3 h-3 text-blue-900"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                    aria-hidden="true"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zM8 10.707a1 1 0 0 0 1.415 0L10 9.414l.585.707a1 1 0 1 0 1.415-1.414L10 7.586l-.585.707a1 1 0 1 0-1.415-1.414L8 8.293l-.585-.707a1 1 0 1 0-1.415 1.414l.585.707 1.415-.707z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                  <span className="text-gray-700 font-normal">
+                                    {assignee.email}
+                                  </span>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-gray-500">
+                            No assignees assigned yet.
+                          </p>
+                        )}
+                      </div>
                       <div className="flex items-center">
                         <button
                           onClick={() => handleEditSubTask(subTask)}
@@ -440,7 +688,7 @@ export default function TaskDetails({ params }) {
                 </ul>
               ) : (
                 <p className="text-black">No subtasks available.</p>
-              )}
+              )} */}
 
               {editingSubTaskId && (
                 <div className="mt-4 p-4 border border-gray-300 rounded-md bg-gray-50">
@@ -469,6 +717,18 @@ export default function TaskDetails({ params }) {
                       value={editingSubTask.status}
                       onChange={handleSubTaskFormChange}
                       className="w-full p-2 border border-gray-300 text-black rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Assignees (Comma-separated emails)
+                    </label>
+                    <input
+                      type="text"
+                      name="assignees"
+                      value={editingSubTask.assignees}
+                      onChange={handleSubTaskFormChange}
+                      className="mt-1 p-2 border text-gray-700 border-gray-300 rounded-md w-full"
                     />
                   </div>
 
@@ -559,7 +819,7 @@ export default function TaskDetails({ params }) {
                 </div>
               )}
             </div>
-          </div>
+         
         )}
       </div>
     </div>

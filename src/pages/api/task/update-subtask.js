@@ -9,43 +9,106 @@ export const config = {
   },
 };
 
-export default async function handler(req, res) {
-  if (req.method === 'POST') {
-    try {
-      const { id, title, status, images, documents } = req.body;
-      const numericSubTaskId = Number(id);
+const handler = async (req, res) => {
+  if (req.method === "POST") {
+    const form = formidable({ multiples: true });
 
-      if (isNaN(numericSubTaskId)) {
-        return res.status(400).json({ error: 'Invalid subtask ID: id should be a number.' });
+    form.parse(req, async (err, fields, files) => {
+      if (err) {
+        return res.status(500).json({ error: "Error parsing the files" });
       }
 
-      // Check if the subtask ID exists
-      const subTaskExists = await prisma.subTask.findUnique({
-        where: { id: numericSubTaskId },
-      });
-
-      if (!subTaskExists) {
-        return res.status(404).json({ error: `Subtask with ID ${numericSubTaskId} does not exist.` });
+      const id = parseInt(fields.id[0]);
+      const title = fields.title[0];
+      const status = fields.status[0];
+      let assigneesEmails = [];
+      try {
+        assigneesEmails = fields.assignees
+          ? JSON.parse(fields.assignees[0])
+          : [];
+      } catch (e) {
+        console.error("Error parsing assignees:", e.message);
+        return res.status(400).json({ error: "Invalid assignees format" });
       }
 
-      // Update the subtask
-      const updatedSubtask = await prisma.subTask.update({
-        where: { id: numericSubTaskId },
-        data: {
-          title,
-          status, // Update the status
-          images, // Update the array of image URLs
-          documents, // Update the array of document URLs
-        },
-      });
+      const imagesFile = files.images ? files.images[0] : null;
+      const documentFile = files.documents ? files.documents[0] : null;
 
-      res.status(200).json(updatedSubtask);
-    } catch (error) {
-      console.error('Error updating subtask:', error);
-      res.status(500).json({ error: error.message });
-    }
+      try {
+        let imageUrl = "";
+        let documnetUrl = "";
+
+        // Upload images if provided
+        if (imagesFile?.filepath) {
+          const imageUpload = await cloudinary.uploader.upload(
+            imagesFile.filepath,
+            {
+              folder: "tasks",
+            }
+          );
+          imageUrl = imageUpload.secure_url;
+        }
+
+        // Upload cover image if provided
+        if (documentFile?.filepath) {
+          const documentUpload = await cloudinary.uploader.upload(
+            documentFile.filepath,
+            {
+              folder: "tasks",
+            }
+          );
+          documnetUrl = documentUpload.secure_url;
+        }
+
+        let assigneesEmails = [];
+        try {
+          assigneesEmails = fields.assignees
+            ? JSON.parse(fields.assignees[0])
+            : [];
+        } catch (e) {
+          console.error("Error parsing assignees:", e.message);
+          return res.status(400).json({ error: "Invalid assignees format" });
+        }
+
+        const assignees = await prisma.user.findMany({
+          where: { email: { in: assigneesEmails } },
+          select: { id: true, email: true }, // Include email for validation
+        });
+        
+
+        if (assignees.length !== assigneesEmails.length) {
+          const invalidEmails = assigneesEmails.filter(
+            (email) => !assignees.some((user) => user.email === email)
+          );
+          return res
+            .status(400)
+            .json({ error: `Invalid assignees: ${invalidEmails.join(", ")}` });
+        }
+
+        // Update the task
+        const updatedTask = await prisma.task.update({
+          where: { id },
+          data: {
+            title,
+            description,
+            status,
+            images: imageUrl || undefined,
+            documents: documnetUrl || undefined,
+            assignees: {
+              set: assignees.map((assignee) => ({ id: assignee.id })), // Replace existing assignees
+            },
+          },
+        });
+
+        res.status(200).json(updatedTask);
+      } catch (error) {
+        console.error("Error updating task:", error);
+        res.status(500).json({ error: "Error updating task" });
+      }
+    });
   } else {
-    res.setHeader('Allow', ['PUT']);
+    res.setHeader("Allow", ["POST"]);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
-}
+};
+export default handler;
