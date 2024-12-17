@@ -86,6 +86,8 @@ const ListView = ({ task, onEditSubTask, onDeleteSubTask }) => {
 
 // Board View Component
 const BoardView = ({ task, onEditSubTask, onDeleteSubTask }) => {
+  const [searchTerm, setSearchTerm] = useState("");
+
   // Define status columns
   const columns = [
     { id: "not-started", title: "Not Started", color: "bg-gray-100" },
@@ -94,7 +96,7 @@ const BoardView = ({ task, onEditSubTask, onDeleteSubTask }) => {
     { id: "completed", title: "Completed", color: "bg-green-100" },
   ];
 
-  // Group subtasks by status
+  // Group subtasks by status with search filter
   const getSubtasksByStatus = () => {
     const groupedTasks = {
       "not-started": [],
@@ -104,9 +106,22 @@ const BoardView = ({ task, onEditSubTask, onDeleteSubTask }) => {
     };
 
     task.subTasks?.forEach((subTask) => {
+      // Determine the status, defaulting to "not-started" if not specified
       const status = subTask.status?.toLowerCase() || "not-started";
-      groupedTasks[status]?.push(subTask) ||
-        groupedTasks["not-started"].push(subTask);
+
+      // Check if the subtask matches the search term
+      const matchesSearch = 
+        searchTerm === "" || // Show all if no search term
+        subTask.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (subTask.assignees && 
+         subTask.assignees.some(assignee => 
+           assignee.email.toLowerCase().includes(searchTerm.toLowerCase())
+         ));
+
+      // If matches search, add to the appropriate status column
+      if (matchesSearch) {
+        groupedTasks[status]?.push(subTask);
+      }
     });
 
     return groupedTasks;
@@ -115,56 +130,70 @@ const BoardView = ({ task, onEditSubTask, onDeleteSubTask }) => {
   const groupedSubtasks = getSubtasksByStatus();
 
   return (
-    <div className="grid grid-cols-3 gap-4">
-      {columns.map((column) => (
-        <div
-          key={column.id}
-          className={`${column.color} rounded-lg p-4 shadow-md`}
-        >
-          <h3 className="text-xl font-semibold mb-4 text-gray-800">
-            {column.title}
-          </h3>
-          {groupedSubtasks[column.id].length > 0 ? (
-            <div className="space-y-2">
-              {groupedSubtasks[column.id].map((subTask) => (
-                <div
-                  key={subTask.id}
-                  className="bg-white p-3 rounded-lg shadow-sm"
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-gray-800">
-                      {subTask.title}
-                    </span>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => onEditSubTask(subTask)}
-                        className="text-blue-600 hover:text-blue-800"
-                        aria-label="Edit Subtask"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => onDeleteSubTask(subTask.id)}
-                        className="text-red-600 hover:text-red-800"
-                        aria-label="Delete Subtask"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
+    <div className="bg-white shadow-md rounded-md p-4">
+      {/* Search input */}
+      <div className="flex items-center mb-4 px-4">
+        <MagnifyingGlassIcon className="h-5 w-5 text-gray-500 mr-2" />
+        <input
+          type="text"
+          placeholder="Search subtasks..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-md text-gray-800"
+        />
+      </div>
+
+      <div className="grid grid-cols-4 gap-4">
+        {columns.map((column) => (
+          <div
+            key={column.id}
+            className={`${column.color} rounded-lg p-4 shadow-md`}
+          >
+            <h3 className="text-xl font-semibold mb-4 text-gray-800">
+              {column.title}
+            </h3>
+            {groupedSubtasks[column.id].length > 0 ? (
+              <div className="space-y-2">
+                {groupedSubtasks[column.id].map((subTask) => (
+                  <div
+                    key={subTask.id}
+                    className="bg-white p-3 rounded-lg shadow-sm"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium text-gray-800">
+                        {subTask.title}
+                      </span>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => onEditSubTask(subTask)}
+                          className="text-blue-600 hover:text-blue-800"
+                          aria-label="Edit Subtask"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => onDeleteSubTask(subTask.id)}
+                          className="text-red-600 hover:text-red-800"
+                          aria-label="Delete Subtask"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {subTask.assignees && subTask.assignees.length > 0
+                        ? subTask.assignees.map((a) => a.email).join(", ")
+                        : "No Assignees"}
                     </div>
                   </div>
-                  <div className="text-sm text-gray-200">
-                    {subTask.assignees && subTask.assignees.length > 0
-                      ? subTask.assignees.map((a) => a.email).join(", ")
-                      : "No Assignees"}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center">No subtasks</p>
-          )}
-        </div>
-      ))}
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center">No subtasks</p>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
