@@ -151,9 +151,9 @@ export default function Dashboard() {
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-blue-950 text-white p-5 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-blue-950 text-white p-3 overflow-y-auto transform transition-transform duration-300 ease-in-out ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:relative md:translate-x-0`}
+        } md:translate-x-0`}
       >
         <h2 className="text-2xl font-semibold mb-4">Flow Board</h2>
 
