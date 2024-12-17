@@ -1,16 +1,31 @@
+// pages/api/task/update-subtask.js
 import { PrismaClient } from "@prisma/client";
 import cloudinary from "../../../../lib/cloudinary";
 import formidable from "formidable";
+import fs from "fs";
+
 const prisma = new PrismaClient();
 
 export const config = {
   api: {
-    bodyParser: false, // Disable Next.js body parsing for file upload handling
+    bodyParser: false,
   },
 };
 
-const handler = async (req, res) => {
-  if (req.method === "POST") {
+const uploadToCloudinary = async (file, folder) => {
+  try {
+    const uploadResult = await cloudinary.uploader.upload(file.filepath, {
+      folder: folder,
+    });
+    return uploadResult.secure_url;
+  } catch (error) {
+    console.error("Cloudinary upload error:", error);
+    return null;
+  }
+};
+
+export default async function handler(req, res) {
+  if (req.method === 'POST') {
     const form = formidable({ multiples: true });
 
     form.parse(req, async (err, fields, files) => {
@@ -18,48 +33,13 @@ const handler = async (req, res) => {
         return res.status(500).json({ error: "Error parsing the files" });
       }
 
-      const id = parseInt(fields.id[0]);
-      const title = fields.title[0];
-      const status = fields.status[0];
-      let assigneesEmails = [];
       try {
-        assigneesEmails = fields.assignees
-          ? JSON.parse(fields.assignees[0])
-          : [];
-      } catch (e) {
-        console.error("Error parsing assignees:", e.message);
-        return res.status(400).json({ error: "Invalid assignees format" });
-      }
+        // Parse fields
+        const subTaskId = parseInt(fields.id[0]);
+        const title = fields.title[0];
+        const status = fields.status[0];
 
-      const imagesFile = files.images ? files.images[0] : null;
-      const documentFile = files.documents ? files.documents[0] : null;
-
-      try {
-        let imageUrl = "";
-        let documnetUrl = "";
-
-        // Upload images if provided
-        if (imagesFile?.filepath) {
-          const imageUpload = await cloudinary.uploader.upload(
-            imagesFile.filepath,
-            {
-              folder: "tasks",
-            }
-          );
-          imageUrl = imageUpload.secure_url;
-        }
-
-        // Upload cover image if provided
-        if (documentFile?.filepath) {
-          const documentUpload = await cloudinary.uploader.upload(
-            documentFile.filepath,
-            {
-              folder: "tasks",
-            }
-          );
-          documnetUrl = documentUpload.secure_url;
-        }
-
+        // Parse and validate assignees
         let assigneesEmails = [];
         try {
           assigneesEmails = fields.assignees
@@ -70,45 +50,63 @@ const handler = async (req, res) => {
           return res.status(400).json({ error: "Invalid assignees format" });
         }
 
+        // Find assignee user IDs
         const assignees = await prisma.user.findMany({
           where: { email: { in: assigneesEmails } },
-          select: { id: true, email: true }, // Include email for validation
+          select: { id: true },
         });
-        
 
-        if (assignees.length !== assigneesEmails.length) {
-          const invalidEmails = assigneesEmails.filter(
-            (email) => !assignees.some((user) => user.email === email)
-          );
-          return res
-            .status(400)
-            .json({ error: `Invalid assignees: ${invalidEmails.join(", ")}` });
+        // Upload images
+        const imageUrls = [];
+        if (files.images) {
+          const imageFiles = Array.isArray(files.images) 
+            ? files.images 
+            : [files.images[0]];
+
+          for (const imageFile of imageFiles) {
+            const imageUrl = await uploadToCloudinary(imageFile, "tasks");
+            if (imageUrl) imageUrls.push(imageUrl);
+          }
         }
 
-        // Update the task
-        const updatedTask = await prisma.task.update({
-          where: { id },
+        // Upload documents
+        const documentUrls = [];
+        if (files.documents) {
+          const documentFiles = Array.isArray(files.documents) 
+            ? files.documents 
+            : [files.documents[0]];
+
+          for (const docFile of documentFiles) {
+            const docUrl = await uploadToCloudinary(docFile, "tasks");
+            if (docUrl) documentUrls.push(docUrl);
+          }
+        }
+
+        // Update subtask
+        const updatedSubTask = await prisma.subTask.update({
+          where: { id: subTaskId },
           data: {
             title,
-            description,
             status,
-            images: imageUrl || undefined,
-            documents: documnetUrl || undefined,
             assignees: {
-              set: assignees.map((assignee) => ({ id: assignee.id })), // Replace existing assignees
+              set: assignees.map(assignee => ({ id: assignee.id })),
             },
+            images: imageUrls,
+            documents: documentUrls,
+          },
+          include: {
+            assignees: true,
           },
         });
 
-        res.status(200).json(updatedTask);
+        res.status(200).json(updatedSubTask);
       } catch (error) {
-        console.error("Error updating task:", error);
-        res.status(500).json({ error: "Error updating task" });
+        console.error("Error updating subtask:", error);
+        res.status(500).json({ error: "Error updating subtask", details: error.message });
       }
     });
   } else {
-    res.setHeader("Allow", ["POST"]);
+    res.setHeader('Allow', ['POST']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
-};
-export default handler;
+}
