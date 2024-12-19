@@ -235,7 +235,7 @@ export default function Dashboard() {
             Flow Board AI
           </a>
           <a
-            href="#"
+            href="/components/Calendar"
             className="hover:bg-blue-900 text-sm px-4 py-1 rounded flex items-center"
           >
             <CalendarIcon className="h-5 w-5 mr-2" />
