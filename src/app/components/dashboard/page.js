@@ -228,7 +228,7 @@ export default function Dashboard() {
             Dashboard
           </a>
           <a
-            href="#"
+            href="/components/taskAI/taskManager"
             className="hover:bg-blue-900 text-sm px-4 py-1 rounded flex items-center"
           >
             <CpuChipIcon className="h-5 w-5 mr-2" />
