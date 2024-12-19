@@ -1,4 +1,3 @@
-// app/page.js
 import CalendarWithNotes from '../Calendar/CalendarWithNotes/page';
 
 export default function Home() {

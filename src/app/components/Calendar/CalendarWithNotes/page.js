@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import Dashboard from "../../dashboard/page.js";
 
 const CalendarWithNotes = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -10,19 +9,41 @@ const CalendarWithNotes = () => {
   const [noteText, setNoteText] = useState('');
   const [showNoteInput, setShowNoteInput] = useState(false);
 
-  // Load notes from localStorage on component mount
+  // Load notes from localStorage on initial mount
   useEffect(() => {
-    const savedNotes = localStorage.getItem('calendarNotes');
-    if (savedNotes) {
-      setNotes(JSON.parse(savedNotes));
-    }
+    const loadNotes = () => {
+      try {
+        const savedNotes = localStorage.getItem('calendarNotes');
+        if (savedNotes) {
+          const parsedNotes = JSON.parse(savedNotes);
+          setNotes(parsedNotes);
+        }
+      } catch (error) {
+        console.error('Error loading notes:', error);
+      }
+    };
+
+    // Add event listener for storage changes
+    const handleStorageChange = (e) => {
+      if (e.key === 'calendarNotes') {
+        try {
+          const updatedNotes = e.newValue ? JSON.parse(e.newValue) : {};
+          setNotes(updatedNotes);
+        } catch (error) {
+          console.error('Error parsing storage change:', error);
+        }
+      }
+    };
+
+    loadNotes();
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
-  // Save notes to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('calendarNotes', JSON.stringify(notes));
-  }, [notes]);
-
+  // Date utility functions
   const getDaysInMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   };
@@ -81,19 +102,46 @@ const CalendarWithNotes = () => {
     return [...allCurrentDays, ...nextMonthDays];
   };
 
+  const formatDate = (date) => {
+    return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
+  };
+
+  // Event handlers
   const handleDateClick = (date) => {
+    const formattedDate = formatDate(date);
     setSelectedDate(date);
-    setNoteText(notes[date.toDateString()] || '');
+    setNoteText(notes[formattedDate] || '');
     setShowNoteInput(true);
   };
 
   const handleNoteSubmit = (e) => {
     e.preventDefault();
-    if (selectedDate && noteText.trim()) {
-      setNotes(prev => ({
-        ...prev,
-        [selectedDate.toDateString()]: noteText
-      }));
+    if (selectedDate) {
+      const formattedDate = formatDate(selectedDate);
+      const updatedNotes = {
+        ...notes,
+        [formattedDate]: noteText.trim()
+      };
+
+      if (!noteText.trim()) {
+        delete updatedNotes[formattedDate];
+      }
+
+      setNotes(updatedNotes);
+      localStorage.setItem('calendarNotes', JSON.stringify(updatedNotes));
+      setShowNoteInput(false);
+      setNoteText('');
+    }
+  };
+
+  const handleDeleteNote = () => {
+    if (selectedDate) {
+      const formattedDate = formatDate(selectedDate);
+      const updatedNotes = { ...notes };
+      delete updatedNotes[formattedDate];
+      
+      setNotes(updatedNotes);
+      localStorage.setItem('calendarNotes', JSON.stringify(updatedNotes));
       setShowNoteInput(false);
       setNoteText('');
     }
@@ -115,7 +163,6 @@ const CalendarWithNotes = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-    
       <div className="bg-white rounded-lg shadow-lg p-6">
         {/* Calendar Header */}
         <div className="flex items-center justify-between mb-6">
@@ -148,10 +195,10 @@ const CalendarWithNotes = () => {
         {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-1">
           {getAllDays().map((day, index) => {
-            const dateString = day.date.toDateString();
-            const hasNote = notes[dateString];
-            const isToday = new Date().toDateString() === dateString;
-            const isSelected = selectedDate?.toDateString() === dateString;
+            const formattedDate = formatDate(day.date);
+            const hasNote = notes[formattedDate];
+            const isToday = formatDate(new Date()) === formattedDate;
+            const isSelected = selectedDate && formatDate(selectedDate) === formattedDate;
 
             return (
               <div
@@ -171,7 +218,7 @@ const CalendarWithNotes = () => {
                   </span>
                   {hasNote && (
                     <div className="mt-1 text-xs bg-yellow-100 p-1 rounded truncate">
-                      {notes[dateString]}
+                      {notes[formattedDate]}
                     </div>
                   )}
                 </div>
@@ -182,10 +229,10 @@ const CalendarWithNotes = () => {
 
         {/* Note Input Modal */}
         {showNoteInput && selectedDate && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg w-96">
               <h3 className="text-lg font-semibold mb-4">
-                Add Note for {selectedDate.toLocaleDateString()}
+                {notes[formatDate(selectedDate)] ? 'Edit' : 'Add'} Note for {selectedDate.toLocaleDateString()}
               </h3>
               <form onSubmit={handleNoteSubmit}>
                 <textarea
@@ -194,20 +241,29 @@ const CalendarWithNotes = () => {
                   className="w-full p-2 border rounded mb-4 h-32"
                   placeholder="Enter your note here..."
                 />
-                <div className="flex justify-end space-x-2">
+                <div className="flex justify-between">
                   <button
                     type="button"
-                    onClick={() => setShowNoteInput(false)}
-                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                    onClick={handleDeleteNote}
+                    className="px-4 py-2 text-red-600 hover:bg-red-50 rounded"
                   >
-                    Cancel
+                    Delete
                   </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                  >
-                    Save Note
-                  </button>
+                  <div className="space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowNoteInput(false)}
+                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      Save Note
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
