@@ -28,6 +28,7 @@ model User {
   assignedTasks      Task[]    @relation("TaskAssignees") // Tasks assigned to the user
   assignedSubTasks   SubTask[] @relation("UserSubTaskAssignee") // Subtasks assigned to this user
   githubToken        String?  // Add this field to store the GitHub token
+  notes              Note[]    @relation("UserNotes")
 
 }
 
@@ -55,6 +56,20 @@ model SubTask {
   documents   String[]  // Array of document URLs
   comments    String?   // Comments on the subtask
   assignees   User[]    @relation("UserSubTaskAssignee") // Relation to multiple users
+}
+
+
+model Note {
+  id        String   @id @default(cuid())
+  userId    Int      // Changed to Int to match User.id type
+  user      User     @relation("UserNotes", fields: [userId], references: [id]) // Added relation
+  date      DateTime
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId, date])
 }
 
 

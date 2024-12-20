@@ -1,47 +1,128 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
 
 const CalendarWithNotes = () => {
+  const router = useRouter();
+  const [userId, setUserId] = useState(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [notes, setNotes] = useState({});
   const [noteText, setNoteText] = useState('');
   const [showNoteInput, setShowNoteInput] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Load notes from localStorage on initial mount
   useEffect(() => {
-    const loadNotes = () => {
-      try {
-        const savedNotes = localStorage.getItem('calendarNotes');
-        if (savedNotes) {
-          const parsedNotes = JSON.parse(savedNotes);
-          setNotes(parsedNotes);
-        }
-      } catch (error) {
-        console.error('Error loading notes:', error);
-      }
-    };
-
-    // Add event listener for storage changes
-    const handleStorageChange = (e) => {
-      if (e.key === 'calendarNotes') {
-        try {
-          const updatedNotes = e.newValue ? JSON.parse(e.newValue) : {};
-          setNotes(updatedNotes);
-        } catch (error) {
-          console.error('Error parsing storage change:', error);
-        }
-      }
-    };
-
-    loadNotes();
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      const user = JSON.parse(userData);
+      setUserId(parseInt(user.id)); // Make sure to parse the ID as an integer
+    } else {
+      router.push("/");
+    }
   }, []);
+
+  // Fetch notes
+useEffect(() => {
+  const fetchNotes = async () => {
+    if (!userId) return;
+
+    try {
+      setIsLoading(true);
+      const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+      const response = await fetch(
+        `/api/notes/get-notes?userId=${userId}&startDate=${firstDay.toISOString()}&endDate=${lastDay.toISOString()}`
+      );
+
+      if (!response.ok) throw new Error('Failed to fetch notes');
+
+      const fetchedNotes = await response.json();
+      const notesMap = {};
+      fetchedNotes.forEach(note => {
+        notesMap[format(new Date(note.date), 'yyyy-MM-dd')] = note.content;
+      });
+      setNotes(notesMap);
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchNotes();
+}, [currentDate, userId]);
+
+// Add/Update note
+const handleNoteSubmit = async (e) => {
+  e.preventDefault();
+  if (!userId || !selectedDate) return;
+
+  try {
+    setIsLoading(true);
+    const formattedDate = formatDate(selectedDate);
+    
+    const response = await fetch('/api/notes/add-note', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: userId,
+        date: formattedDate,
+        content: noteText
+      }),
+    });
+
+    if (!response.ok) throw new Error('Failed to save note');
+
+    setNotes(prev => ({
+      ...prev,
+      [formattedDate]: noteText
+    }));
+    setShowNoteInput(false);
+  } catch (error) {
+    console.error('Error saving note:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+// Delete note
+const handleDeleteNote = async () => {
+  if (!userId || !selectedDate) return;
+
+  try {
+    setIsLoading(true);
+    const formattedDate = formatDate(selectedDate);
+    
+    const response = await fetch('/api/notes/delete-note', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: userId,
+        date: formattedDate
+      }),
+    });
+
+    if (!response.ok) throw new Error('Failed to delete note');
+
+    const updatedNotes = { ...notes };
+    delete updatedNotes[formattedDate];
+    setNotes(updatedNotes);
+    setNoteText('');
+    setShowNoteInput(false);
+  } catch (error) {
+    console.error('Error deleting note:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Date utility functions
   const getDaysInMonth = (date) => {
@@ -114,39 +195,7 @@ const CalendarWithNotes = () => {
     setShowNoteInput(true);
   };
 
-  const handleNoteSubmit = (e) => {
-    e.preventDefault();
-    if (selectedDate) {
-      const formattedDate = formatDate(selectedDate);
-      const updatedNotes = {
-        ...notes,
-        [formattedDate]: noteText.trim()
-      };
-
-      if (!noteText.trim()) {
-        delete updatedNotes[formattedDate];
-      }
-
-      setNotes(updatedNotes);
-      localStorage.setItem('calendarNotes', JSON.stringify(updatedNotes));
-      setShowNoteInput(false);
-      setNoteText('');
-    }
-  };
-
-  const handleDeleteNote = () => {
-    if (selectedDate) {
-      const formattedDate = formatDate(selectedDate);
-      const updatedNotes = { ...notes };
-      delete updatedNotes[formattedDate];
-      
-      setNotes(updatedNotes);
-      localStorage.setItem('calendarNotes', JSON.stringify(updatedNotes));
-      setShowNoteInput(false);
-      setNoteText('');
-    }
-  };
-
+  
   const handlePreviousMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
   };
@@ -160,6 +209,9 @@ const CalendarWithNotes = () => {
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
+  if (!userId) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -259,9 +311,10 @@ const CalendarWithNotes = () => {
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                      disabled={isLoading}
+                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
                     >
-                      Save Note
+                      {isLoading ? 'Saving...' : 'Save Note'}
                     </button>
                   </div>
                 </div>
