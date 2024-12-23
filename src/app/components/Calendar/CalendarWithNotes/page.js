@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
+import Dashboard from "../../dashboard/page.js";
 
 const CalendarWithNotes = () => {
   const router = useRouter();
@@ -210,109 +211,127 @@ const handleDeleteNote = async () => {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
   if (!userId) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-900"></div>
+      </div>
+    );
   }
 
+
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row mr-14">
+      {/* Left side - Dashboard */}
+      <div className="w-full md:w-1/4 bg-gray-100 shadow-lg">
+        <Dashboard />
+      </div>
+
+      {/* Right side - Calendar */}
+      <div className="flex-1 p-6 md:p-8 space-y-6">
         {/* Calendar Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-8  p-4 rounded-lg shadow-sm">
           <button
             onClick={handlePreviousMonth}
-            className="p-2 hover:bg-gray-100 rounded-full"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft className="text-blue-900" size={24} />
           </button>
-          <h2 className="text-xl font-semibold">
+          <h2 className="text-2xl font-bold text-blue-900">
             {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
           </h2>
           <button
             onClick={handleNextMonth}
-            className="p-2 hover:bg-gray-100 rounded-full"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
           >
-            <ChevronRight size={24} />
+            <ChevronRight className="text-blue-900" size={24} />
           </button>
         </div>
 
-        {/* Day Names */}
-        <div className="grid grid-cols-7 mb-2">
-          {dayNames.map(day => (
-            <div key={day} className="text-center font-semibold text-gray-600 py-2">
-              {day}
-            </div>
-          ))}
-        </div>
-
-        {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-1">
-          {getAllDays().map((day, index) => {
-            const formattedDate = formatDate(day.date);
-            const hasNote = notes[formattedDate];
-            const isToday = formatDate(new Date()) === formattedDate;
-            const isSelected = selectedDate && formatDate(selectedDate) === formattedDate;
-
-            return (
-              <div
-                key={index}
-                onClick={() => handleDateClick(day.date)}
-                className={`
-                  p-2 h-24 border rounded-lg cursor-pointer transition-colors
-                  ${day.isCurrentMonth ? 'bg-white' : 'bg-gray-50 text-gray-400'}
-                  ${isToday ? 'border-blue-500' : 'border-gray-200'}
-                  ${isSelected ? 'bg-blue-50' : ''}
-                  hover:bg-gray-50
-                `}
-              >
-                <div className="flex flex-col h-full">
-                  <span className={`text-sm ${isToday ? 'text-blue-500 font-semibold' : ''}`}>
-                    {day.date.getDate()}
-                  </span>
-                  {hasNote && (
-                    <div className="mt-1 text-xs bg-yellow-100 p-1 rounded truncate">
-                      {notes[formattedDate]}
-                    </div>
-                  )}
-                </div>
+        {/* Calendar Container */}
+        <div className="bg-gray-50 rounded-xl shadow-sm p-6">
+          {/* Day Names */}
+          <div className="grid grid-cols-7 mb-4">
+            {dayNames.map(day => (
+              <div key={day} className="text-center font-semibold text-blue-900 py-2">
+                {day}
               </div>
-            );
-          })}
+            ))}
+          </div>
+
+          {/* Calendar Grid */}
+          <div className="grid grid-cols-7 gap-2">
+            {getAllDays().map((day, index) => {
+              const formattedDate = formatDate(day.date);
+              const hasNote = notes[formattedDate];
+              const isToday = formatDate(new Date()) === formattedDate;
+              const isSelected = selectedDate && formatDate(selectedDate) === formattedDate;
+
+              return (
+                <div
+                  key={index}
+                  onClick={() => handleDateClick(day.date)}
+                  className={`
+                    p-2 h-28 border rounded-lg cursor-pointer transition-all duration-200
+                    ${day.isCurrentMonth ? 'bg-white' : 'bg-gray-50 text-gray-400'}
+                    ${isToday ? 'border-blue-900 border-2' : 'border-gray-100'}
+                    ${isSelected ? 'bg-blue-50 border-blue-900' : ''}
+                    hover:shadow-md hover:border-blue-900 hover:bg-blue-50
+                  `}
+                >
+                  <div className="flex flex-col h-full">
+                    <span className={`
+                      text-sm font-medium
+                      ${isToday ? 'text-blue-900' : ''}
+                      ${day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}
+                    `}>
+                      {day.date.getDate()}
+                    </span>
+                    {hasNote && (
+                      <div className="mt-1 text-xs bg-blue-900 text-white p-2 rounded-md shadow-sm truncate">
+                        {notes[formattedDate]}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Note Input Modal */}
         {showNoteInput && selectedDate && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg w-96">
-              <h3 className="text-lg font-semibold mb-4">
-                {notes[formatDate(selectedDate)] ? 'Edit' : 'Add'} Note for {selectedDate.toLocaleDateString()}
+            <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-md">
+              <h3 className="text-xl font-bold text-blue-900 mb-4">
+                {notes[formatDate(selectedDate)] ? 'Edit' : 'Add'} Note for {format(selectedDate, 'MMMM d, yyyy')}
               </h3>
-              <form onSubmit={handleNoteSubmit}>
+              <form onSubmit={handleNoteSubmit} className="space-y-4">
                 <textarea
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
-                  className="w-full p-2 border rounded mb-4 h-32"
+                  className="w-full p-3 border text-black border-gray-200 rounded-lg mb-4 h-32 focus:ring-2 focus:ring-blue-900 focus:border-blue-900 outline-none transition-all duration-200"
                   placeholder="Enter your note here..."
                 />
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <button
                     type="button"
                     onClick={handleDeleteNote}
-                    className="px-4 py-2 text-red-600 hover:bg-red-50 rounded"
+                    className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
                   >
-                    Delete
+                    Delete Note
                   </button>
-                  <div className="space-x-2">
+                  <div className="space-x-3">
                     <button
                       type="button"
                       onClick={() => setShowNoteInput(false)}
-                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                      className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 disabled:opacity-50 transition-colors duration-200"
                     >
                       {isLoading ? 'Saving...' : 'Save Note'}
                     </button>
