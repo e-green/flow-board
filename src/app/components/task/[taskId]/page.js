@@ -14,6 +14,7 @@ import {
 import Dashboard from "../../dashboard/page.js";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
+import WorkflowDiagramModal from '../../diagrams/page.js';
 
 
 // List View Component
@@ -514,6 +515,10 @@ export default function TaskDetails({ params }) {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
+    <div className="flex-grow max-w-5xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6 md:mt-0">
+  <WorkflowDiagramModal task={task} />
+  
+</div>
       <ToastContainer position="top-right" autoClose={2000} />
       <div className="bg-gray-100 lg:w-1/4 shadow-lg p-0">
         <Dashboard />

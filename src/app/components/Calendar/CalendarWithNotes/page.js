@@ -1,8 +1,8 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, Bell } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
+import { format, addDays, isTomorrow } from 'date-fns';
 import Dashboard from "../../dashboard/page.js";
 
 const CalendarWithNotes = () => {
@@ -14,116 +14,130 @@ const CalendarWithNotes = () => {
   const [noteText, setNoteText] = useState('');
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showReminders, setShowReminders] = useState(false);
 
+  // Calculate upcoming notes using useMemo
+  const upcomingNotes = useMemo(() => {
+    const tomorrow = addDays(new Date(), 1);
+    return Object.entries(notes).filter(([dateStr]) => {
+      const noteDate = new Date(dateStr);
+      return isTomorrow(noteDate);
+    }).map(([dateStr, content]) => ({
+      date: new Date(dateStr),
+      content
+    }));
+  }, [notes]);
+
+  // Check user authentication
   useEffect(() => {
     const userData = localStorage.getItem("user");
     if (userData) {
       const user = JSON.parse(userData);
-      setUserId(parseInt(user.id)); // Make sure to parse the ID as an integer
+      setUserId(parseInt(user.id));
     } else {
       router.push("/");
     }
   }, []);
 
   // Fetch notes
-useEffect(() => {
-  const fetchNotes = async () => {
-    if (!userId) return;
+  useEffect(() => {
+    const fetchNotes = async () => {
+      if (!userId) return;
+
+      try {
+        setIsLoading(true);
+        const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+        const response = await fetch(
+          `/api/notes/get-notes?userId=${userId}&startDate=${firstDay.toISOString()}&endDate=${lastDay.toISOString()}`
+        );
+
+        if (!response.ok) throw new Error('Failed to fetch notes');
+
+        const fetchedNotes = await response.json();
+        const notesMap = {};
+        fetchedNotes.forEach(note => {
+          notesMap[format(new Date(note.date), 'yyyy-MM-dd')] = note.content;
+        });
+        setNotes(notesMap);
+      } catch (error) {
+        console.error('Error fetching notes:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNotes();
+  }, [currentDate, userId]);
+
+  // Add/Update note
+  const handleNoteSubmit = async (e) => {
+    e.preventDefault();
+    if (!userId || !selectedDate) return;
 
     try {
       setIsLoading(true);
-      const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-
-      const response = await fetch(
-        `/api/notes/get-notes?userId=${userId}&startDate=${firstDay.toISOString()}&endDate=${lastDay.toISOString()}`
-      );
-
-      if (!response.ok) throw new Error('Failed to fetch notes');
-
-      const fetchedNotes = await response.json();
-      const notesMap = {};
-      fetchedNotes.forEach(note => {
-        notesMap[format(new Date(note.date), 'yyyy-MM-dd')] = note.content;
+      const formattedDate = formatDate(selectedDate);
+      
+      const response = await fetch('/api/notes/add-note', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userId,
+          date: formattedDate,
+          content: noteText
+        }),
       });
-      setNotes(notesMap);
+
+      if (!response.ok) throw new Error('Failed to save note');
+
+      setNotes(prev => ({
+        ...prev,
+        [formattedDate]: noteText
+      }));
+      setShowNoteInput(false);
     } catch (error) {
-      console.error('Error fetching notes:', error);
+      console.error('Error saving note:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  fetchNotes();
-}, [currentDate, userId]);
+  // Delete note
+  const handleDeleteNote = async () => {
+    if (!userId || !selectedDate) return;
 
-// Add/Update note
-const handleNoteSubmit = async (e) => {
-  e.preventDefault();
-  if (!userId || !selectedDate) return;
+    try {
+      setIsLoading(true);
+      const formattedDate = formatDate(selectedDate);
+      
+      const response = await fetch('/api/notes/delete-note', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userId,
+          date: formattedDate
+        }),
+      });
 
-  try {
-    setIsLoading(true);
-    const formattedDate = formatDate(selectedDate);
-    
-    const response = await fetch('/api/notes/add-note', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userId: userId,
-        date: formattedDate,
-        content: noteText
-      }),
-    });
+      if (!response.ok) throw new Error('Failed to delete note');
 
-    if (!response.ok) throw new Error('Failed to save note');
-
-    setNotes(prev => ({
-      ...prev,
-      [formattedDate]: noteText
-    }));
-    setShowNoteInput(false);
-  } catch (error) {
-    console.error('Error saving note:', error);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-// Delete note
-const handleDeleteNote = async () => {
-  if (!userId || !selectedDate) return;
-
-  try {
-    setIsLoading(true);
-    const formattedDate = formatDate(selectedDate);
-    
-    const response = await fetch('/api/notes/delete-note', {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userId: userId,
-        date: formattedDate
-      }),
-    });
-
-    if (!response.ok) throw new Error('Failed to delete note');
-
-    const updatedNotes = { ...notes };
-    delete updatedNotes[formattedDate];
-    setNotes(updatedNotes);
-    setNoteText('');
-    setShowNoteInput(false);
-  } catch (error) {
-    console.error('Error deleting note:', error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+      const updatedNotes = { ...notes };
+      delete updatedNotes[formattedDate];
+      setNotes(updatedNotes);
+      setNoteText('');
+      setShowNoteInput(false);
+    } catch (error) {
+      console.error('Error deleting note:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Date utility functions
   const getDaysInMonth = (date) => {
@@ -185,10 +199,9 @@ const handleDeleteNote = async () => {
   };
 
   const formatDate = (date) => {
-    return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
+    return date.toISOString().split('T')[0];
   };
 
-  // Event handlers
   const handleDateClick = (date) => {
     const formattedDate = formatDate(date);
     setSelectedDate(date);
@@ -196,7 +209,6 @@ const handleDeleteNote = async () => {
     setShowNoteInput(true);
   };
 
-  
   const handlePreviousMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
   };
@@ -210,6 +222,7 @@ const handleDeleteNote = async () => {
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
+
   if (!userId) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -217,6 +230,9 @@ const handleDeleteNote = async () => {
       </div>
     );
   }
+
+
+  
 
 
   return (
@@ -228,26 +244,71 @@ const handleDeleteNote = async () => {
 
       {/* Right side - Calendar */}
       <div className="flex-1 p-6 md:p-8 space-y-6">
-        {/* Calendar Header */}
-        <div className="flex items-center justify-between mb-8  p-4 rounded-lg shadow-sm">
-          <button
-            onClick={handlePreviousMonth}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
-          >
-            <ChevronLeft className="text-blue-900" size={24} />
-          </button>
-          <h2 className="text-2xl font-bold text-blue-900">
-            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-          </h2>
-          <button
-            onClick={handleNextMonth}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
-          >
-            <ChevronRight className="text-blue-900" size={24} />
-          </button>
-        </div>
+        {/* Header with Reminder Icon */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center justify-between w-full p-4 rounded-lg shadow-sm">
+            <button
+              onClick={handlePreviousMonth}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+            >
+              <ChevronLeft className="text-blue-900" size={24} />
+            </button>
+            <h2 className="text-2xl font-bold text-blue-900">
+              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+            </h2>
+            <button
+              onClick={handleNextMonth}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+            >
+              <ChevronRight className="text-blue-900" size={24} />
+            </button>
+          </div>
+          
+          {/* Reminder Bell */}
+          <div className="relative">
+            <button
+              onClick={() => setShowReminders(!showReminders)}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 relative"
+            >
+              <Bell className="text-blue-900" size={24} />
+              {upcomingNotes.length > 0 && (
+                <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {upcomingNotes.length}
+                </span>
+              )}
+            </button>
 
-        {/* Calendar Container */}
+            {/* Reminder Dropdown */}
+            {showReminders && (
+              <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl z-50 border border-gray-200">
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-3">
+                    Tomorrow's Reminders
+                  </h3>
+                  {upcomingNotes.length > 0 ? (
+                    <div className="space-y-2">
+                      {upcomingNotes.map((note, index) => (
+                        <div
+                          key={index}
+                          className="p-3 bg-blue-50 rounded-lg border border-blue-100"
+                        >
+                          <p className="text-sm font-medium text-blue-900">
+                            {format(note.date, 'MMMM d, yyyy')}
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {note.content}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">No reminders for tomorrow</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
         <div className="bg-gray-50 rounded-xl shadow-sm p-6">
           {/* Day Names */}
           <div className="grid grid-cols-7 mb-4">
@@ -265,6 +326,7 @@ const handleDeleteNote = async () => {
               const hasNote = notes[formattedDate];
               const isToday = formatDate(new Date()) === formattedDate;
               const isSelected = selectedDate && formatDate(selectedDate) === formattedDate;
+              const isTomorrowDate = isTomorrow(day.date);
 
               return (
                 <div
@@ -275,6 +337,7 @@ const handleDeleteNote = async () => {
                     ${day.isCurrentMonth ? 'bg-white' : 'bg-gray-50 text-gray-400'}
                     ${isToday ? 'border-blue-900 border-2' : 'border-gray-100'}
                     ${isSelected ? 'bg-blue-50 border-blue-900' : ''}
+                    ${isTomorrowDate && hasNote ? 'ring-2 ring-yellow-400' : ''}
                     hover:shadow-md hover:border-blue-900 hover:bg-blue-50
                   `}
                 >
@@ -298,7 +361,7 @@ const handleDeleteNote = async () => {
           </div>
         </div>
 
-        {/* Note Input Modal */}
+        {/* Note Input Modal - Keeping the existing modal code */}
         {showNoteInput && selectedDate && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-md">

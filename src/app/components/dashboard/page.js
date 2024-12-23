@@ -242,7 +242,7 @@ export default function Dashboard() {
             Calendar
           </a>
           <a
-            href="#"
+            href="/components/diagrams"
             className="hover:bg-blue-900 text-sm px-4 py-1 rounded flex items-center"
           >
             <Cog6ToothIcon className="h-5 w-5 mr-2" />
