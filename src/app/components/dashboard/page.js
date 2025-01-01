@@ -18,6 +18,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye } from "@fortawesome/free-solid-svg-icons";
+import { ListTodo } from "lucide-react";
 
 export default function Dashboard() {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -253,8 +254,8 @@ export default function Dashboard() {
             href="/components/ToDoList"
             className="hover:bg-blue-900 text-sm px-4 py-1 rounded flex items-center"
           >
-            <Cog6ToothIcon className="h-5 w-5 mr-2" />
-            WeeklyTodoList
+            <ListTodo className="h-5 w-5 mr-2" />
+            Weekly Todo List
           </a>
           <a
             href="/components/diagrams"
