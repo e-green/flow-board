@@ -234,12 +234,27 @@ export default function Dashboard() {
             <CpuChipIcon className="h-5 w-5 mr-2" />
             Flow Board AI
           </a>
+          {/* <a
+            href="/components/chatBot"
+            className="hover:bg-blue-900 text-sm px-4 py-1 rounded flex items-center"
+          >
+            <CpuChipIcon className="h-5 w-5 mr-2" />
+            ChatBot
+          </a> */}
+          
           <a
             href="/components/Calendar"
             className="hover:bg-blue-900 text-sm px-4 py-1 rounded flex items-center"
           >
             <CalendarIcon className="h-5 w-5 mr-2" />
             Calendar
+          </a>
+          <a
+            href="/components/ToDoList"
+            className="hover:bg-blue-900 text-sm px-4 py-1 rounded flex items-center"
+          >
+            <Cog6ToothIcon className="h-5 w-5 mr-2" />
+            WeeklyTodoList
           </a>
           <a
             href="/components/diagrams"
