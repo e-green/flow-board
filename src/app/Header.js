@@ -1,22 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
-import SiteLogo from "../app/images/flowBoardLogo.png";
 
 const Header = () => {
   return (
     <header className="bg-gray-800 text-white py-4 sticky top-0 z-50 shadow-lg">
       <div className="container mx-auto flex justify-between items-center px-4">
-        {/* Logo and Brand */}
-        {/* <div className="flex items-center space-x-2">
-          <Image
-            src={SiteLogo}
-            alt="Flow Board Logo"
-            width={40}
-            height={40}
-            className="rounded"
-          />
-          
-        </div> */}
         <h1 className="text-2xl font-bold">Flow Board</h1>
 
         {/* Navigation and Buttons */}
