@@ -20,7 +20,7 @@ export default function Home() {
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:underline">
+                <a href="/components/About" className="hover:underline">
                   About
                 </a>
               </li>
