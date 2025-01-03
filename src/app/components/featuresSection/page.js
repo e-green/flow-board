@@ -143,7 +143,7 @@ const FeaturesPage = () => {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300"
+                className="bg-gray-100 rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300"
               >
                 <div className="flex items-center mb-4">
                   {feature.icon}

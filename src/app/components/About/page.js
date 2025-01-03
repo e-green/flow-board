@@ -1,5 +1,5 @@
-import React from 'react';
-import { ArrowRight } from 'lucide-react';
+import React from "react";
+import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Header from "../../Header.js";
 import animationGif from "../../images/AnimationAbout.gif";
@@ -20,14 +20,16 @@ const AboutPage = () => {
                   Our Vision
                 </h2>
                 <p className="text-lg text-gray-600 mb-6">
-                  We envision a world where project management is intuitive, visual, and 
-                  accessible to everyone. Flowboard is designed to eliminate the complexity 
-                  of traditional project management tools while delivering powerful 
-                  features that teams actually need.
+                  We envision a world where project management is intuitive,
+                  visual, and accessible to everyone. Flowboard is designed to
+                  eliminate the complexity of traditional project management
+                  tools while delivering powerful features that teams actually
+                  need.
                 </p>
                 <p className="text-lg text-gray-600">
-                  Our platform enables teams to create clear visual workflows, manage tasks 
-                  efficiently, and collaborate seamlessly - all in one integrated workspace.
+                  Our platform enables teams to create clear visual workflows,
+                  manage tasks efficiently, and collaborate seamlessly - all in
+                  one integrated workspace.
                 </p>
               </div>
               <div className="lg:w-1/2">
@@ -53,52 +55,54 @@ const AboutPage = () => {
               Why Choose Flowboard
             </h2>
             <div className="grid md:grid-cols-2 gap-12">
-              <div className="relative group hover:transform hover:scale-105 transition-all duration-300">
-                <Image 
+              <div className="relative group hover:transform hover:scale-105 transition-all duration-300 ">
+                <Image
                   src={VisualTaskImg}
                   alt="Visual Workflows"
-                  className="rounded-lg shadow-lg mb-6 w-full"
+                  className="rounded-lg shadow-lg mb-6 w-3/4 max-w-sm"
                 />
+
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
                   Visual Task Management
                 </h3>
                 <p className="text-gray-600">
-                  Transform complex projects into clear, visual workflows that your 
-                  entire team can understand and execute efficiently.
+                  Transform complex projects into clear, visual workflows that
+                  your entire team can understand and execute efficiently.
                 </p>
-                <ArrowRight className="absolute bottom-0 right-0 h-6 w-6 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ArrowRight className="absolute bottom-0 right-0 h-6 w-6 text-blue-900 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <div className="relative group hover:transform hover:scale-105 transition-all duration-300">
-                <Image 
+                <Image
                   src={CollobarationImg}
                   alt="Team Collaboration"
-                  className="rounded-lg shadow-lg mb-6 w-full"
+                  className="rounded-lg shadow-lg mb-6 w-3/4 max-w-sm"
                 />
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
                   Seamless Collaboration
                 </h3>
                 <p className="text-gray-600">
-                  Built-in collaboration tools keep your team aligned and productive, 
-                  with real-time updates and clear communication channels.
+                  Built-in collaboration tools keep your team aligned and
+                  productive, with real-time updates and clear communication
+                  channels.
                 </p>
-                <ArrowRight className="absolute bottom-0 right-0 h-6 w-6 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ArrowRight className="absolute bottom-0 right-0 h-6 w-6 text-blue-900 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             </div>
           </div>
         </section>
 
         {/* Call to Action Section */}
-        <section className="bg-gradient-to-r from-blue-600 to-blue-700 py-20">
+        <section className="bg-gradient-to-r from-blue-950 to-blue-700 py-20">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold text-white mb-6">
               Ready to Transform Your Workflow?
             </h2>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-              Join thousands of teams who have already revolutionized their project 
-              management with Flowboard.
+              Join thousands of teams who have already revolutionized their
+              project management with Flowboard.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-white text-blue-600 px-8 py-3 rounded-lg hover:bg-blue-50 transition-colors font-medium flex items-center justify-center gap-2">
+              <button className="bg-white text-blue-900 px-8 py-3 rounded-lg hover:bg-blue-50 transition-colors font-medium flex items-center justify-center gap-2">
                 Get Started Free
                 <ArrowRight className="h-5 w-5" />
               </button>
