@@ -15,7 +15,7 @@ import {
   Bot
 } from 'lucide-react';
 import Header from "../../Header.js";
-import Footer from "../../components/Footer";
+import Footer from "../../footer";
 
 const FeaturesPage = () => {
   const features = [

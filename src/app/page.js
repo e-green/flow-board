@@ -1,7 +1,7 @@
 import Image from "next/image";
 import HomeImg from "../app/images/homeImg.png";
 import SiteLogo from "../app/images/flowBoardLogo.png"
-
+import Footer from "../app/footer";
 
 export default function Home() {
   return (
@@ -86,14 +86,7 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white py-4">
-        <div className="container mx-auto text-center">
-          <p>
-            &copy; {new Date().getFullYear()} Flow Board. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

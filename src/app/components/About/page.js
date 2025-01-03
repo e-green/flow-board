@@ -5,7 +5,7 @@ import Header from "../../Header.js";
 import animationGif from "../../images/AnimationAbout.gif";
 import CollobarationImg from "../../images/CollobarationImg.jpg";
 import VisualTaskImg from "../../images/VisualTaskImg.jpg";
-import Footer from "../../components/Footer";
+import Footer from "../../footer";
 
 const AboutPage = () => {
   return (
