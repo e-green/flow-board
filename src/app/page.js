@@ -25,7 +25,7 @@ export default function Home() {
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:underline">
+                <a href="/components/featuresSection" className="hover:underline">
                   Features
                 </a>
               </li>

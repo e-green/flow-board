@@ -5,6 +5,7 @@ import Header from "../../Header.js";
 import animationGif from "../../images/AnimationAbout.gif";
 import CollobarationImg from "../../images/CollobarationImg.jpg";
 import VisualTaskImg from "../../images/VisualTaskImg.jpg";
+import Footer from "../../components/Footer";
 
 const AboutPage = () => {
   return (
@@ -107,40 +108,8 @@ const AboutPage = () => {
             </div>
           </div>
         </section>
-
-        {/* Footer */}
-        <footer className="bg-gray-900 text-gray-400 py-12">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div>
-                <h4 className="text-white font-semibold mb-4">About Flowboard</h4>
-                <p className="text-sm">
-                  Transforming project management with intuitive visual workflows 
-                  and seamless collaboration tools.
-                </p>
-              </div>
-              <div>
-                <h4 className="text-white font-semibold mb-4">Quick Links</h4>
-                <ul className="space-y-2 text-sm">
-                  <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                  <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-                  <li><a href="#" className="hover:text-white transition-colors">Resources</a></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-white font-semibold mb-4">Contact</h4>
-                <ul className="space-y-2 text-sm">
-                  <li>support@flowboard.com</li>
-                  <li>1-800-FLOWBOARD</li>
-                </ul>
-              </div>
-            </div>
-            <div className="border-t border-gray-800 mt-8 pt-8 text-center">
-              <p className="text-sm">© 2024 Flowboard. All rights reserved.</p>
-            </div>
-          </div>
-        </footer>
       </main>
+      <Footer />
     </div>
   );
 };

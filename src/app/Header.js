@@ -28,7 +28,7 @@ const Header = () => {
             </li>
             <li>
               <Link 
-                href="/features" 
+                href="/components/featuresSection" 
                 className="hover:text-blue-400 transition-colors duration-200"
               >
                 Features
